@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    name: Lint, typecheck, test, build
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: herbal_health
+          POSTGRES_PASSWORD: herbal_health
+          POSTGRES_DB: herbal_health_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U herbal_health"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://herbal_health:herbal_health@localhost:5432/herbal_health_test
+      DIRECT_URL: postgresql://herbal_health:herbal_health@localhost:5432/herbal_health_test
+      AUTH_SECRET: ci-test-secret
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      CRON_SECRET: ci-test-secret
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+
+      - name: Run full test suite (lint, typecheck, unit, integration, e2e)
+        run: npm test
+
+      - name: Build
+        run: npm run build

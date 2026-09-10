@@ -1,0 +1,60 @@
+@import 'tailwindcss';
+
+:root {
+  /* Design tokens derived from docs/design/ reference screenshots. */
+  --background: #faf8f3;
+  --foreground: #14201a;
+
+  --color-primary-950: #0d1f16;
+  --color-primary-900: #14291d;
+  --color-primary-700: #1f4530;
+  --color-primary-600: #2b5c41;
+  --color-primary-500: #3a7554;
+
+  --color-accent-500: #d97a2b;
+  --color-accent-600: #b8631f;
+
+  --color-neutral-50: #faf8f3;
+  --color-neutral-100: #f2efe6;
+  --color-neutral-600: #5b6660;
+  --color-neutral-900: #14201a;
+
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.5rem;
+  --font-size-2xl: 2rem;
+  --font-size-3xl: 2.75rem;
+
+  --spacing-section: 6rem;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary-950: var(--color-primary-950);
+  --color-primary-900: var(--color-primary-900);
+  --color-primary-700: var(--color-primary-700);
+  --color-primary-600: var(--color-primary-600);
+  --color-primary-500: var(--color-primary-500);
+  --color-accent-500: var(--color-accent-500);
+  --color-accent-600: var(--color-accent-600);
+  --color-neutral-50: var(--color-neutral-50);
+  --color-neutral-100: var(--color-neutral-100);
+  --color-neutral-600: var(--color-neutral-600);
+  --color-neutral-900: var(--color-neutral-900);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent-500);
+  outline-offset: 2px;
+}
