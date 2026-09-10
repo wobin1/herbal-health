@@ -14,7 +14,11 @@
     "test:e2e": "playwright test",
     "test": "npm run lint && npm run typecheck && npm run test:unit && npm run test:e2e",
     "prepare": "husky",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "db:seed": "prisma db seed"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "6.19.3",
@@ -27,6 +31,7 @@
     "zod": "^4.6.1"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@playwright/test": "1.63.0",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "7.0.1",
@@ -42,6 +47,7 @@
     "prettier": "3.9.6",
     "prettier-plugin-tailwindcss": "0.8.1",
     "tailwindcss": "^4",
+    "tsx": "^4.23.13",
     "typescript": "^5",
     "vitest": "5.0.0"
   }

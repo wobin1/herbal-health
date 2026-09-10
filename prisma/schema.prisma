@@ -45,6 +45,122 @@ model AdminSession {
   @@index([adminUserId])
 }
 
+enum ContentPageSlug {
+  ABOUT
+  CONTACT
+  TERMS
+  PRIVACY
+  REFUND_POLICY
+  DISCLAIMER
+}
+
+model ContentPage {
+  id              String          @id @default(cuid())
+  slug            ContentPageSlug @unique
+  title           String
+  body            String
+  metaDescription String?
+  published       Boolean         @default(true)
+  updatedAt       DateTime        @updatedAt
+  createdAt       DateTime        @default(now())
+}
+
+model HomepageContent {
+  id                 String   @id @default(cuid())
+  heroHeading        String
+  heroSubheading     String
+  heroCtaLabel       String
+  heroCtaHref        String
+  missionHeading     String
+  missionBody        String
+  finalCtaHeading    String
+  finalCtaBody       String
+  finalCtaLabel      String
+  finalCtaHref       String
+  footerAboutText    String
+  footerContactEmail String
+  footerContactPhone String?
+  updatedAt          DateTime @updatedAt
+  createdAt          DateTime @default(now())
+}
+
+model EducationalFocusItem {
+  id          String   @id @default(cuid())
+  icon        String
+  title       String
+  description String
+  sortOrder   Int      @default(0)
+  published   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([published, sortOrder])
+}
+
+model Instructor {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  credentials String?
+  shortBio    String
+  fullBio     String
+  photoUrl    String?
+  websiteUrl  String?
+  socialLinks Json?
+  isFeatured  Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  published   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([published, sortOrder])
+}
+
+model FAQ {
+  id        String   @id @default(cuid())
+  question  String
+  answer    String
+  category  String?
+  sortOrder Int      @default(0)
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([published, sortOrder])
+}
+
+enum EventStatus {
+  DRAFT
+  COMING_SOON
+  PUBLISHED
+  ON_SALE
+  SOLD_OUT
+  CLOSED
+  CANCELLED
+  COMPLETED
+}
+
+model Event {
+  id               String      @id @default(cuid())
+  slug             String      @unique
+  title            String
+  seriesName       String?
+  volumeLabel      String?
+  shortDescription String
+  startAt          DateTime
+  timezone         String
+  city             String
+  state            String
+  coverImageUrl    String?
+  status           EventStatus @default(DRAFT)
+  isFeatured       Boolean     @default(false)
+  sortOrder        Int         @default(0)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  @@index([status, isFeatured, sortOrder])
+}
+
 model AuditLog {
   id         String   @id @default(cuid())
   actorId    String?
