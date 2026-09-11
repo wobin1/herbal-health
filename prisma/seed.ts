@@ -235,8 +235,9 @@ async function main() {
     },
   });
 
-  console.log(`Seeded admin user: ${adminEmail} / ${adminPassword} (role ADMIN, MFA disabled)`);
-  console.log(`Seeded editor user: ${editorEmail} / ${editorPassword} (role CONTENT_EDITOR, MFA disabled)`);
+  console.log(`Seeded admin user: ${adminEmail} / ${adminPassword} (role ADMIN)`);
+  console.log(`Seeded editor user: ${editorEmail} / ${editorPassword} (role CONTENT_EDITOR)`);
+  console.log('First login for each will prompt MFA setup (authenticator app required).');
 }
 
 main()
