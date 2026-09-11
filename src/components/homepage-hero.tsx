@@ -30,34 +30,48 @@ export function HomepageHero({
         />
         <div className="bg-primary-950/70 absolute inset-0" />
         <div className="from-primary-950 via-primary-950/60 absolute inset-0 bg-gradient-to-r to-transparent" />
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              'radial-gradient(60% 75% at 18% 50%, rgba(13,31,22,0.75) 0%, rgba(13,31,22,0.35) 55%, rgba(13,31,22,0) 80%)',
+          }}
+        />
       </div>
 
       <div className="relative mx-auto w-full max-w-6xl px-6 py-16">
-        <div className="flex max-w-xl flex-col items-start gap-6">
-          <p className="text-sm font-semibold tracking-wide text-neutral-50 uppercase">{eyebrow}</p>
-          <h1 className="flex flex-col leading-[1.05] font-extrabold tracking-tight text-neutral-50">
+        <div className="flex max-w-xl flex-col items-start">
+          <p className="text-accent-500/90 text-sm font-semibold tracking-[0.2em] uppercase">
+            {eyebrow}
+          </p>
+          <h1 className="font-serif mt-3 flex flex-col leading-[1.05] font-semibold tracking-tight text-neutral-50">
             <span className="text-4xl sm:text-5xl lg:text-6xl">{headingLine1}</span>
             <span className="text-4xl sm:text-5xl lg:text-6xl">{headingLine2}</span>
-            <span
-              className="mt-1 text-xl text-transparent sm:text-2xl lg:text-3xl"
-              style={{ WebkitTextStroke: '1px var(--color-neutral-50)' }}
-            >
+            <span className="text-neutral-50/75 mt-1 text-xl italic sm:text-2xl lg:text-3xl">
               {headingLine3}
             </span>
           </h1>
-          <p className="max-w-md text-sm leading-relaxed text-neutral-50/90">
+          <p className="text-neutral-50/85 mt-6 max-w-md text-sm leading-relaxed">
             Empowering wellness through traditional herbal wisdom. Join our traveling educational
             workshops to learn the fundamentals of herbal preparation and wellness.
           </p>
-          <Link
-            href={ctaHref}
-            className="group inline-flex items-center gap-3 rounded-full bg-neutral-50 py-2 pr-2 pl-6 text-sm font-semibold text-neutral-900 shadow-lg transition-transform hover:scale-[1.02]"
-          >
-            {ctaLabel}
-            <span className="bg-accent-500 flex h-9 w-9 items-center justify-center rounded-full text-neutral-50 transition-colors">
-              <ArrowUpRightIcon className="h-4 w-4" />
-            </span>
-          </Link>
+          <div className="mt-9 flex flex-wrap items-center gap-x-8 gap-y-4">
+            <Link
+              href={ctaHref}
+              className="group inline-flex items-center gap-3 rounded-full bg-neutral-50 py-2 pr-2 pl-6 text-sm font-semibold text-neutral-900 shadow-lg transition-transform hover:scale-[1.02]"
+            >
+              {ctaLabel}
+              <span className="bg-accent-500 flex h-9 w-9 items-center justify-center rounded-full text-neutral-50 transition-colors">
+                <ArrowUpRightIcon className="h-4 w-4" />
+              </span>
+            </Link>
+            <Link
+              href="/about"
+              className="text-neutral-50/80 hover:text-neutral-50 border-neutral-50/40 hover:border-neutral-50 border-b text-sm font-medium transition-colors"
+            >
+              Meet Dr. Goodman
+            </Link>
+          </div>
         </div>
       </div>
 

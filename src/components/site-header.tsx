@@ -26,14 +26,16 @@ export function SiteHeader() {
     >
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-3 px-6 py-5">
         <Link href="/" className="flex items-center">
-          <Image
-            src="/herbal-logo.jpeg"
-            alt="Herbal Health"
-            width={160}
-            height={160}
-            className="h-14 w-14 rounded-full object-cover"
-            priority
-          />
+          <span className="shadow-primary-950/40 rounded-full bg-neutral-50/10 p-1 shadow-lg backdrop-blur-sm">
+            <Image
+              src="/herbal-logo.jpeg"
+              alt="Herbal Health"
+              width={160}
+              height={160}
+              className="h-16 w-16 rounded-full object-cover"
+              priority
+            />
+          </span>
         </Link>
 
         <nav aria-label="Primary" className="order-3 w-full sm:order-none sm:w-auto">

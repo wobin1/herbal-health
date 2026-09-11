@@ -26,7 +26,7 @@ export default async function HomePage() {
   return (
     <>
       <HomepageHero
-        eyebrow="#1 Herbal Health Seminar Series"
+        eyebrow="Rooted in Nature, Backed by Wisdom"
         headingLine1="Herbal Health"
         headingLine2="Seminar Series"
         headingLine3="with Dr. JC Goodman, N.D."
