@@ -29,6 +29,7 @@ const {
   cancelEvent,
   completeEvent,
   closeSales,
+  startSales,
   deleteEvent,
   createTicketType,
   updateTicketType,
@@ -159,6 +160,22 @@ describe('closeSales', () => {
     const result = await closeSales('evt-1', ACTOR);
     expect(result.status).toBe('CLOSED');
     expect(auditLogMock).toHaveBeenCalledWith(expect.objectContaining({ action: 'event.closed' }));
+  });
+});
+
+describe('startSales', () => {
+  it('refuses to start sales on an event that is not PUBLISHED', async () => {
+    prismaMock.event.findUnique.mockResolvedValue({ ...COMPLETE_EVENT, status: 'DRAFT' });
+    await expect(startSales('evt-1', ACTOR)).rejects.toThrow(EventValidationError);
+    expect(prismaMock.event.update).not.toHaveBeenCalled();
+  });
+
+  it('sets status to ON_SALE and records an audit log', async () => {
+    prismaMock.event.findUnique.mockResolvedValue({ ...COMPLETE_EVENT, status: 'PUBLISHED' });
+    prismaMock.event.update.mockResolvedValue({ ...COMPLETE_EVENT, status: 'ON_SALE' });
+    const result = await startSales('evt-1', ACTOR);
+    expect(result.status).toBe('ON_SALE');
+    expect(auditLogMock).toHaveBeenCalledWith(expect.objectContaining({ action: 'event.sales_started' }));
   });
 });
 

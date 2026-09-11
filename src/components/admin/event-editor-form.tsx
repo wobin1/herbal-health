@@ -180,6 +180,23 @@ export function EventEditorForm({
     }
   }
 
+  async function handleStartSales() {
+    if (!initialValues?.id) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/admin/events/${initialValues.id}/start-sales`, { method: 'POST' });
+      const data = await response.json();
+      if (!response.ok) {
+        setError(data.error?.message ?? 'Unable to start sales');
+        return;
+      }
+      router.refresh();
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   return (
     <div className="mt-8">
       <div role="tablist" aria-label="Event editor sections" className="flex flex-wrap gap-2 border-b border-neutral-200">
@@ -350,6 +367,16 @@ export function EventEditorForm({
             className="rounded-full border border-primary-950 px-6 py-2 text-sm font-medium text-primary-950 disabled:opacity-50"
           >
             Publish
+          </button>
+        ) : null}
+        {isEdit && canPublish && values.status === 'PUBLISHED' ? (
+          <button
+            type="button"
+            onClick={handleStartSales}
+            disabled={submitting}
+            className="rounded-full border border-primary-950 px-6 py-2 text-sm font-medium text-primary-950 disabled:opacity-50"
+          >
+            Start Sales
           </button>
         ) : null}
         {isEdit ? <span className="text-sm text-neutral-500">Status: {values.status}</span> : null}

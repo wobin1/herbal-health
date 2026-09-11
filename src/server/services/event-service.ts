@@ -207,6 +207,14 @@ export async function publishEvent(id: string, actor: Actor): Promise<Event> {
   return published;
 }
 
+export async function startSales(id: string, actor: Actor): Promise<Event> {
+  const event = await requireEvent(id);
+  if (event.status !== 'PUBLISHED') {
+    throw new EventValidationError('Only a PUBLISHED event can start sales');
+  }
+  return transitionStatus(id, 'ON_SALE', 'event.sales_started', actor);
+}
+
 export async function cancelEvent(id: string, actor: Actor): Promise<Event> {
   return transitionStatus(id, 'CANCELLED', 'event.cancelled', actor);
 }
