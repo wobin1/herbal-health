@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { TicketTypeManager, type TicketTypeRow } from '@/components/admin/ticket-type-manager';
 
 const TABS = [
   'General',
@@ -9,6 +10,7 @@ const TABS = [
   'Location',
   'Content',
   'Learning Objectives',
+  'Tickets',
   'Media',
   'SEO',
   'Legal',
@@ -88,10 +90,12 @@ function toLines(value: string): string[] {
 export function EventEditorForm({
   initialValues,
   locations,
+  ticketTypes = [],
   canPublish,
 }: {
   initialValues?: EventEditorInitialValues;
   locations: EventEditorLocation[];
+  ticketTypes?: TicketTypeRow[];
   canPublish: boolean;
 }) {
   const router = useRouter();
@@ -279,6 +283,14 @@ export function EventEditorForm({
               onChange={(v) => update('materialsIncluded', v)}
             />
           </>
+        ) : null}
+
+        {activeTab === 'Tickets' ? (
+          isEdit ? (
+            <TicketTypeManager eventId={initialValues!.id!} ticketTypes={ticketTypes} />
+          ) : (
+            <p className="text-sm text-neutral-600">Save the event first, then add ticket types here.</p>
+          )
         ) : null}
 
         {activeTab === 'Media' ? (

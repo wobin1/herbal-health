@@ -62,6 +62,13 @@ export default async function EditEventPage({ params }: EditEventPageProps) {
       <EventEditorForm
         initialValues={initialValues}
         locations={locations.map((l) => ({ id: l.id, name: l.name }))}
+        ticketTypes={event.ticketTypes.map((t) => ({
+          id: t.id,
+          name: t.name,
+          priceMinorUnits: t.priceMinorUnits,
+          currency: t.currency,
+          capacity: t.capacity,
+        }))}
         canPublish={hasPermission(session.adminUser.role, 'events:publish')}
       />
     </div>

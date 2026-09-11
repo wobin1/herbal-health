@@ -9,6 +9,12 @@ const prismaMock = {
     update: vi.fn(),
     delete: vi.fn(),
   },
+  eventTicketType: {
+    findUnique: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+  },
 };
 
 vi.mock('@/lib/db/client', () => ({ prisma: prismaMock }));
@@ -24,6 +30,9 @@ const {
   completeEvent,
   closeSales,
   deleteEvent,
+  createTicketType,
+  updateTicketType,
+  deleteTicketType,
   EventValidationError,
   EventNotFoundError,
 } = await import('@/server/services/event-service');
@@ -166,5 +175,73 @@ describe('deleteEvent', () => {
     await deleteEvent('evt-1', ACTOR);
     expect(prismaMock.event.delete).toHaveBeenCalledWith({ where: { id: 'evt-1' } });
     expect(auditLogMock).toHaveBeenCalledWith(expect.objectContaining({ action: 'event.deleted' }));
+  });
+});
+
+const TICKET_TYPE = {
+  id: 'tt-1',
+  eventId: 'evt-1',
+  name: 'General Admission',
+  priceMinorUnits: 4500,
+  currency: 'USD',
+  capacity: 50,
+  sortOrder: 0,
+};
+
+describe('createTicketType', () => {
+  it('rejects when the event does not exist', async () => {
+    prismaMock.event.findUnique.mockResolvedValue(null);
+    await expect(
+      createTicketType('evt-missing', { name: 'GA', priceMinorUnits: 100, capacity: 10 }, ACTOR),
+    ).rejects.toThrow(EventNotFoundError);
+    expect(prismaMock.eventTicketType.create).not.toHaveBeenCalled();
+  });
+
+  it('creates a ticket type scoped to the event and records an audit log', async () => {
+    prismaMock.event.findUnique.mockResolvedValue(COMPLETE_EVENT);
+    prismaMock.eventTicketType.create.mockResolvedValue(TICKET_TYPE);
+    const result = await createTicketType(
+      'evt-1',
+      { name: 'General Admission', priceMinorUnits: 4500, capacity: 50 },
+      ACTOR,
+    );
+    expect(prismaMock.eventTicketType.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ eventId: 'evt-1', name: 'General Admission', priceMinorUnits: 4500 }),
+    });
+    expect(result).toEqual(TICKET_TYPE);
+    expect(auditLogMock).toHaveBeenCalledWith(expect.objectContaining({ action: 'event.ticket_type.created' }));
+  });
+});
+
+describe('updateTicketType', () => {
+  it('rejects when the ticket type does not belong to the given event', async () => {
+    prismaMock.eventTicketType.findUnique.mockResolvedValue({ ...TICKET_TYPE, eventId: 'other-event' });
+    await expect(updateTicketType('evt-1', 'tt-1', { capacity: 60 }, ACTOR)).rejects.toThrow(EventNotFoundError);
+    expect(prismaMock.eventTicketType.update).not.toHaveBeenCalled();
+  });
+
+  it('updates price/capacity and records an audit log', async () => {
+    prismaMock.eventTicketType.findUnique.mockResolvedValue(TICKET_TYPE);
+    prismaMock.eventTicketType.update.mockResolvedValue({ ...TICKET_TYPE, priceMinorUnits: 5000, capacity: 60 });
+    const result = await updateTicketType('evt-1', 'tt-1', { priceMinorUnits: 5000, capacity: 60 }, ACTOR);
+    expect(result.priceMinorUnits).toBe(5000);
+    expect(result.capacity).toBe(60);
+    expect(auditLogMock).toHaveBeenCalledWith(expect.objectContaining({ action: 'event.ticket_type.updated' }));
+  });
+});
+
+describe('deleteTicketType', () => {
+  it('rejects when the ticket type does not belong to the given event', async () => {
+    prismaMock.eventTicketType.findUnique.mockResolvedValue({ ...TICKET_TYPE, eventId: 'other-event' });
+    await expect(deleteTicketType('evt-1', 'tt-1', ACTOR)).rejects.toThrow(EventNotFoundError);
+    expect(prismaMock.eventTicketType.delete).not.toHaveBeenCalled();
+  });
+
+  it('deletes the ticket type and records an audit log', async () => {
+    prismaMock.eventTicketType.findUnique.mockResolvedValue(TICKET_TYPE);
+    prismaMock.eventTicketType.delete.mockResolvedValue(TICKET_TYPE);
+    await deleteTicketType('evt-1', 'tt-1', ACTOR);
+    expect(prismaMock.eventTicketType.delete).toHaveBeenCalledWith({ where: { id: 'tt-1' } });
+    expect(auditLogMock).toHaveBeenCalledWith(expect.objectContaining({ action: 'event.ticket_type.deleted' }));
   });
 });

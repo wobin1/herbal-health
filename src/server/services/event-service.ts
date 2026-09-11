@@ -1,4 +1,4 @@
-import type { Event, EventStatus, Prisma } from '@prisma/client';
+import type { Event, EventStatus, EventTicketType, Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db/client';
 import { recordAuditLog } from '@/server/services/audit-log-service';
 
@@ -231,5 +231,68 @@ export async function deleteEvent(id: string, actor: Actor): Promise<void> {
     entityType: 'Event',
     entityId: id,
     ipAddress: actor.ipAddress,
+  });
+}
+
+export type TicketTypeInput = Omit<
+  Prisma.EventTicketTypeUncheckedCreateInput,
+  'id' | 'eventId' | 'createdAt' | 'updatedAt'
+>;
+
+async function requireTicketType(eventId: string, ticketTypeId: string): Promise<EventTicketType> {
+  const ticketType = await prisma.eventTicketType.findUnique({ where: { id: ticketTypeId } });
+  if (!ticketType || ticketType.eventId !== eventId) {
+    throw new EventNotFoundError(`Ticket type ${ticketTypeId} not found on event ${eventId}`);
+  }
+  return ticketType;
+}
+
+export async function createTicketType(
+  eventId: string,
+  input: TicketTypeInput,
+  actor: Actor,
+): Promise<EventTicketType> {
+  await requireEvent(eventId);
+  const ticketType = await prisma.eventTicketType.create({ data: { ...input, eventId } });
+  await recordAuditLog({
+    actorId: actor.actorId,
+    action: 'event.ticket_type.created',
+    entityType: 'EventTicketType',
+    entityId: ticketType.id,
+    ipAddress: actor.ipAddress,
+    metadata: { eventId },
+  });
+  return ticketType;
+}
+
+export async function updateTicketType(
+  eventId: string,
+  ticketTypeId: string,
+  input: Partial<TicketTypeInput>,
+  actor: Actor,
+): Promise<EventTicketType> {
+  await requireTicketType(eventId, ticketTypeId);
+  const ticketType = await prisma.eventTicketType.update({ where: { id: ticketTypeId }, data: input });
+  await recordAuditLog({
+    actorId: actor.actorId,
+    action: 'event.ticket_type.updated',
+    entityType: 'EventTicketType',
+    entityId: ticketType.id,
+    ipAddress: actor.ipAddress,
+    metadata: { eventId, fields: Object.keys(input) },
+  });
+  return ticketType;
+}
+
+export async function deleteTicketType(eventId: string, ticketTypeId: string, actor: Actor): Promise<void> {
+  await requireTicketType(eventId, ticketTypeId);
+  await prisma.eventTicketType.delete({ where: { id: ticketTypeId } });
+  await recordAuditLog({
+    actorId: actor.actorId,
+    action: 'event.ticket_type.deleted',
+    entityType: 'EventTicketType',
+    entityId: ticketTypeId,
+    ipAddress: actor.ipAddress,
+    metadata: { eventId },
   });
 }
