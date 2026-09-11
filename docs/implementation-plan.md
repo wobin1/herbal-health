@@ -44,7 +44,7 @@ are rate-limited and logged.
 
 ---
 
-## Phase 2 — Public Website Shell
+## Phase 2 — Public Website Shell ✅ Complete
 
 - Routes: `/`, `/about`, `/faq`, `/contact`, `/terms`, `/privacy`, `/refund-policy`, `/disclaimer`.
 - Homepage sections per spec §9 (hero, mission, upcoming seminars, educational focus, instructors,
@@ -56,6 +56,12 @@ are rate-limited and logged.
 
 **Exit gate:** public shell pages render from DB content, responsive at mobile/tablet/desktop,
 pass automated a11y checks (axe or equivalent) with zero critical violations.
+
+Gate status: lint, typecheck, and unit tests (35/35) pass locally. The Playwright/axe e2e suite
+(`tests/e2e/public-shell.spec.ts`) covers a11y on all shell routes, primary nav, and footer links,
+but its Chromium binary cannot install on this local machine (macOS 13 is unsupported by
+Playwright 1.63) — verified via CI (`ubuntu-latest`), which runs `npx playwright install chromium
+--with-deps` and executes this suite as a required status check.
 
 ---
 
