@@ -113,6 +113,8 @@ model Instructor {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  events EventInstructor[]
+
   @@index([published, sortOrder])
 }
 
@@ -140,25 +142,111 @@ enum EventStatus {
   COMPLETED
 }
 
+model Location {
+  id         String   @id @default(cuid())
+  name       String
+  address    String
+  city       String
+  state      String
+  postalCode String?
+  country    String   @default("US")
+  latitude   Float?
+  longitude  Float?
+  mapUrl     String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  events Event[]
+
+  @@index([city, state])
+}
+
 model Event {
-  id               String      @id @default(cuid())
-  slug             String      @unique
-  title            String
-  seriesName       String?
-  volumeLabel      String?
-  shortDescription String
-  startAt          DateTime
-  timezone         String
-  city             String
-  state            String
-  coverImageUrl    String?
-  status           EventStatus @default(DRAFT)
-  isFeatured       Boolean     @default(false)
-  sortOrder        Int         @default(0)
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
+  id                 String      @id @default(cuid())
+  slug               String      @unique
+  title              String
+  seriesName         String?
+  volumeLabel        String?
+  internalCode       String?
+  shortDescription   String
+  longDescription    String?
+  startAt            DateTime
+  endAt              DateTime?
+  timezone           String
+  city               String
+  state              String
+  locationId         String?
+  coverImageUrl      String?
+  galleryImageUrls   String[]    @default([])
+  documentUrls       String[]    @default([])
+  whatYouWillLearn   String[]    @default([])
+  materialsIncluded  String[]    @default([])
+  prerequisites      String?
+  disclaimer         String?
+  seoTitle           String?
+  seoMetaDescription String?
+  seoCanonicalUrl    String?
+  seoOgImageUrl      String?
+  status             EventStatus @default(DRAFT)
+  isFeatured         Boolean     @default(false)
+  sortOrder          Int         @default(0)
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+
+  location     Location?          @relation(fields: [locationId], references: [id])
+  instructors  EventInstructor[]
+  ticketTypes  EventTicketType[]
+  faqOverrides EventFaqOverride[]
 
   @@index([status, isFeatured, sortOrder])
+  @@index([locationId])
+}
+
+model EventInstructor {
+  id           String   @id @default(cuid())
+  eventId      String
+  instructorId String
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  event      Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  instructor Instructor @relation(fields: [instructorId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, instructorId])
+  @@index([instructorId])
+}
+
+model EventTicketType {
+  id              String    @id @default(cuid())
+  eventId         String
+  name            String
+  priceMinorUnits Int
+  currency        String    @default("USD")
+  capacity        Int
+  salesStartAt    DateTime?
+  salesEndAt      DateTime?
+  refundPolicy    String?
+  sortOrder       Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+}
+
+model EventFaqOverride {
+  id        String   @id @default(cuid())
+  eventId   String
+  question  String
+  answer    String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
 }
 
 model AuditLog {

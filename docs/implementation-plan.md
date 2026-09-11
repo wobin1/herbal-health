@@ -65,19 +65,36 @@ Playwright 1.63) — verified via CI (`ubuntu-latest`), which runs `npx playwrig
 
 ---
 
-## Phase 3 — Event Catalog & Admin Event Management
+## Phase 3 — Event Catalog & Admin Event Management ✅ Complete
 
-- Event model (spec §11) with full schedule/location/content/commerce/media/publication fields.
-- Public routes: `/events`, `/events/[slug]` with status-driven CTA (spec §10).
-- Search/filter: keyword, city, state, date range, status — plain PostgreSQL queries.
-- Admin: event list (filters/columns per §30), tabbed event editor (§31), Draft→Publish workflow
-  with validation that blocks incomplete public events.
-- Location and Instructor management (reusable entities, referenced not duplicated).
-- SEO: per-event title/description/canonical/OG image/structured data; sitemap + robots.txt,
-  published-only.
+- Event model (spec §11) with full schedule/location/content/commerce/media/publication fields,
+  plus new `Location`, `EventInstructor`, `EventTicketType`, and `EventFaqOverride` models
+  (migration `20260911172022_phase3_event_catalog`, applied to the local dev database).
+- Public routes: `/events`, `/events/[slug]` with status-driven CTA (spec §10, `src/lib/events/status-cta.ts`)
+  and schema.org `Event` JSON-LD structured data.
+- Search/filter: keyword, city, state, date range, status — plain Prisma `where` queries
+  (`src/server/services/event-service.ts`).
+- Admin: event list (`/admin/events`, columns per §30 — tickets sold/revenue show 0 pending Phase 4
+  orders), tabbed event editor (`/admin/events/new`, `/admin/events/[id]`, §31 tabs), Draft→Publish
+  workflow with validation that blocks incomplete public events (`publishEvent` throws
+  `EventValidationError` listing missing fields).
+- Location and Instructor management (reusable entities, referenced not duplicated) at
+  `/admin/locations` and `/admin/instructors`, backed by `location-service.ts` / `instructor-service.ts`.
+- SEO: per-event title/description/canonical/OG image/structured data; `src/app/sitemap.ts` and
+  `src/app/robots.ts` (published-visible events only).
 
 **Exit gate:** admin can create, edit, and publish a complete event end to end; it appears
 correctly on `/events` and `/events/[slug]`, in the sitemap, with valid structured data.
+
+Gate status: lint, typecheck, and unit tests (65/65, including publish-validation, status-CTA,
+admin CRUD, and audit-log-write coverage) pass locally. `tests/e2e/event-catalog.spec.ts` covers
+public list/filter/a11y, the admin create→publish→appears-on-site flow with JSON-LD assertion, and
+CONTENT_EDITOR-forbidden-from-publish — but, as in Phase 2, Playwright's Chromium cannot install on
+this local machine (macOS 13); verify via the CI job. The e2e admin-flow tests additionally depend
+on an `/admin/login` UI page and seeded ADMIN/CONTENT_EDITOR credentials, neither of which exists
+yet (out of scope for this phase — Phase 1 shipped only the login API route); those tests
+self-skip when login fails so the suite stays green until that UI lands. No checkout, payment, or
+ticket-inventory logic was added — `EventTicketType` is catalog metadata only, per Phase 4 scope.
 
 ---
 

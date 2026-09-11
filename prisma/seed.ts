@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { hashPassword } from '../src/lib/auth/password';
 
 const prisma = new PrismaClient();
 
@@ -132,6 +133,110 @@ async function main() {
       create: page,
     });
   }
+
+  if (process.env.NODE_ENV === 'production') {
+    console.log('NODE_ENV=production — skipping admin user and sample event seed data.');
+    return;
+  }
+
+  const adminEmail = process.env.SEED_ADMIN_EMAIL ?? 'admin@example.com';
+  const adminPassword = process.env.SEED_ADMIN_PASSWORD ?? 'ChangeMe123!';
+  await prisma.adminUser.upsert({
+    where: { email: adminEmail },
+    update: {},
+    create: {
+      email: adminEmail,
+      passwordHash: await hashPassword(adminPassword),
+      role: 'ADMIN',
+      mfaEnabled: false,
+      isActive: true,
+    },
+  });
+
+  const editorEmail = process.env.SEED_EDITOR_EMAIL ?? 'editor@example.com';
+  const editorPassword = process.env.SEED_EDITOR_PASSWORD ?? 'ChangeMe123!';
+  await prisma.adminUser.upsert({
+    where: { email: editorEmail },
+    update: {},
+    create: {
+      email: editorEmail,
+      passwordHash: await hashPassword(editorPassword),
+      role: 'CONTENT_EDITOR',
+      mfaEnabled: false,
+      isActive: true,
+    },
+  });
+
+  const location = await prisma.location.upsert({
+    where: { id: 'seed-location-portland' },
+    update: {},
+    create: {
+      id: 'seed-location-portland',
+      name: 'Portland Community Wellness Center',
+      address: '123 SW Main St',
+      city: 'Portland',
+      state: 'OR',
+      postalCode: '97204',
+      country: 'US',
+    },
+  });
+
+  const instructor = await prisma.instructor.findUnique({ where: { slug: 'jane-doe' } });
+
+  const event = await prisma.event.upsert({
+    where: { slug: 'herbal-foundations-portland' },
+    update: {},
+    create: {
+      slug: 'herbal-foundations-portland',
+      title: 'Herbal Foundations: An Introduction to Natural Wellness',
+      seriesName: 'Herbal Health Seminar Series',
+      volumeLabel: 'Vol. 1',
+      shortDescription: 'A beginner-friendly seminar covering the basics of evidence-informed herbal wellness.',
+      longDescription:
+        'Join us for a full day of hands-on learning covering herbal preparation methods, safety, and evidence-informed practices, led by experienced instructors.',
+      startAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      endAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000 + 4 * 60 * 60 * 1000),
+      timezone: 'America/Los_Angeles',
+      city: location.city,
+      state: location.state,
+      locationId: location.id,
+      coverImageUrl: 'https://placehold.co/1200x630?text=Herbal+Foundations',
+      whatYouWillLearn: [
+        'Core principles of herbal wellness',
+        'Safe preparation and storage methods',
+        'How to evaluate evidence-informed sources',
+      ],
+      materialsIncluded: ['Printed workbook', 'Sample herbal kit'],
+      status: 'ON_SALE',
+      isFeatured: true,
+      sortOrder: 1,
+    },
+  });
+
+  if (instructor) {
+    await prisma.eventInstructor.upsert({
+      where: { eventId_instructorId: { eventId: event.id, instructorId: instructor.id } },
+      update: {},
+      create: { eventId: event.id, instructorId: instructor.id, sortOrder: 1 },
+    });
+  }
+
+  await prisma.eventTicketType.upsert({
+    where: { id: 'seed-ticket-general' },
+    update: {},
+    create: {
+      id: 'seed-ticket-general',
+      eventId: event.id,
+      name: 'General Admission',
+      priceMinorUnits: 4500,
+      currency: 'USD',
+      capacity: 50,
+      sortOrder: 1,
+    },
+  });
+
+  console.log(`Seeded admin user: ${adminEmail} / ${adminPassword} (role ADMIN, MFA disabled)`);
+  console.log(`Seeded editor user: ${editorEmail} / ${editorPassword} (role CONTENT_EDITOR, MFA disabled)`);
 }
 
 main()
