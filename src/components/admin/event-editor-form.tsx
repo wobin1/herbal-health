@@ -138,8 +138,8 @@ export function EventEditorForm({
     };
   }
 
-  async function handleSave(event: React.FormEvent) {
-    event.preventDefault();
+  async function handleSave(event?: React.FormEvent) {
+    event?.preventDefault();
     setSubmitting(true);
     setError(null);
     try {
@@ -181,7 +181,7 @@ export function EventEditorForm({
   }
 
   return (
-    <form onSubmit={handleSave} className="mt-8">
+    <div className="mt-8">
       <div role="tablist" aria-label="Event editor sections" className="flex flex-wrap gap-2 border-b border-neutral-200">
         {TABS.map((tab) => (
           <button
@@ -335,7 +335,8 @@ export function EventEditorForm({
 
       <div className="mt-8 flex items-center gap-4">
         <button
-          type="submit"
+          type="button"
+          onClick={() => handleSave()}
           disabled={submitting}
           className="rounded-full bg-primary-950 px-6 py-2 text-sm font-medium text-neutral-50 disabled:opacity-50"
         >
@@ -353,7 +354,7 @@ export function EventEditorForm({
         ) : null}
         {isEdit ? <span className="text-sm text-neutral-500">Status: {values.status}</span> : null}
       </div>
-    </form>
+    </div>
   );
 }
 
