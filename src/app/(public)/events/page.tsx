@@ -13,6 +13,19 @@ const EVENT_DATE_FORMATTER = new Intl.DateTimeFormat('en-US', {
   timeZone: 'UTC',
 });
 
+function formatStartingPrice(ticketTypes: Array<{ priceMinorUnits: number; currency: string }>): string | null {
+  if (ticketTypes.length === 0) return null;
+  const cheapest = ticketTypes.reduce((min, t) => (t.priceMinorUnits < min.priceMinorUnits ? t : min));
+  const formatted = new Intl.NumberFormat('en-US', { style: 'currency', currency: cheapest.currency }).format(
+    cheapest.priceMinorUnits / 100,
+  );
+  return `From ${formatted}`;
+}
+
+function totalCapacity(ticketTypes: Array<{ capacity: number }>): number {
+  return ticketTypes.reduce((sum, t) => sum + t.capacity, 0);
+}
+
 interface EventsPageProps {
   searchParams: Promise<{
     keyword?: string;
@@ -101,6 +114,8 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
         <ul className="mt-10 grid gap-6 sm:grid-cols-3">
           {events.map((event) => {
             const cta = getEventStatusCta(event.status);
+            const startingPrice = formatStartingPrice(event.ticketTypes);
+            const capacity = totalCapacity(event.ticketTypes);
             return (
               <li key={event.id} className="rounded-lg border border-neutral-100 p-6">
                 <p className="text-sm text-neutral-600">{EVENT_DATE_FORMATTER.format(event.startAt)}</p>
@@ -108,6 +123,13 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
                 <p className="mt-1 text-sm text-neutral-600">
                   {event.city}, {event.state}
                 </p>
+                {startingPrice || capacity > 0 ? (
+                  <p className="mt-2 text-sm font-medium text-neutral-900">
+                    {startingPrice}
+                    {startingPrice && capacity > 0 ? ' · ' : ''}
+                    {capacity > 0 ? `${capacity} seats` : ''}
+                  </p>
+                ) : null}
                 {cta.label ? (
                   <Link
                     href={`/events/${event.slug}`}

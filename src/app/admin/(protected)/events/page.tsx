@@ -4,6 +4,14 @@ import { listAdminEvents } from '@/server/services/event-service';
 
 const DATE_FORMATTER = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeZone: 'UTC' });
 
+function formatStartingPrice(ticketTypes: Array<{ priceMinorUnits: number; currency: string }>): string {
+  if (ticketTypes.length === 0) return '—';
+  const cheapest = ticketTypes.reduce((min, t) => (t.priceMinorUnits < min.priceMinorUnits ? t : min));
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: cheapest.currency }).format(
+    cheapest.priceMinorUnits / 100,
+  );
+}
+
 export default async function AdminEventsPage() {
   await requirePermission('events:edit');
   const events = await listAdminEvents();
@@ -30,6 +38,7 @@ export default async function AdminEventsPage() {
               <th scope="col" className="py-2 pr-4">Status</th>
               <th scope="col" className="py-2 pr-4">Tickets Sold</th>
               <th scope="col" className="py-2 pr-4">Capacity</th>
+              <th scope="col" className="py-2 pr-4">Starting Price</th>
               <th scope="col" className="py-2 pr-4">Revenue</th>
               <th scope="col" className="py-2 pr-4">Actions</th>
             </tr>
@@ -45,6 +54,7 @@ export default async function AdminEventsPage() {
                   <td className="py-3 pr-4 text-neutral-600">{event.status}</td>
                   <td className="py-3 pr-4 text-neutral-600">0</td>
                   <td className="py-3 pr-4 text-neutral-600">{capacity}</td>
+                  <td className="py-3 pr-4 text-neutral-600">{formatStartingPrice(event.ticketTypes)}</td>
                   <td className="py-3 pr-4 text-neutral-600">$0.00</td>
                   <td className="py-3 pr-4">
                     <Link href={`/admin/events/${event.id}`} className="text-primary-950 underline">
