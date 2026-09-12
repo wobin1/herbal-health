@@ -121,12 +121,14 @@ export async function verifyMfaAndCreateSession(
 
   const { token, expiresAt } = await rotateSession(null, adminUser.id, meta);
   await prisma.adminUser.update({ where: { id: adminUser.id }, data: { lastLoginAt: new Date() } });
+  const viaMfaBypass = Boolean(process.env.DEV_MFA_BYPASS_CODE) && code === process.env.DEV_MFA_BYPASS_CODE;
   await recordAuditLog({
     actorId: adminUser.id,
     action: 'LOGIN_SUCCESS',
     entityType: 'AdminUser',
     entityId: adminUser.id,
     ipAddress: meta.ipAddress,
+    metadata: viaMfaBypass ? { viaMfaBypass: true } : undefined,
   });
 
   return {

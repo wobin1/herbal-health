@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { TOTP, Secret } from 'otpauth';
 import { generateMfaSecret, verifyMfaToken, buildProvisioningUri } from '@/lib/auth/mfa';
 
@@ -27,5 +27,33 @@ describe('MFA (TOTP)', () => {
     const uri = buildProvisioningUri('admin@herbalhealth.test', secret);
     expect(uri).toMatch(/^otpauth:\/\/totp\//);
     expect(uri).toContain(encodeURIComponent('admin@herbalhealth.test'));
+  });
+
+  describe('DEV_MFA_BYPASS_CODE', () => {
+    const ORIGINAL_ENV = { ...process.env };
+
+    afterEach(() => {
+      process.env = { ...ORIGINAL_ENV };
+      vi.unstubAllEnvs();
+    });
+
+    it('is never accepted when DEV_MFA_BYPASS_CODE is not configured, regardless of NODE_ENV', () => {
+      delete process.env.DEV_MFA_BYPASS_CODE;
+      const secret = generateMfaSecret();
+      expect(verifyMfaToken(secret, '000000')).toBe(false);
+    });
+
+    it('accepts the configured bypass code even when NODE_ENV is production', () => {
+      vi.stubEnv('NODE_ENV', 'production');
+      process.env.DEV_MFA_BYPASS_CODE = '000000';
+      const secret = generateMfaSecret();
+      expect(verifyMfaToken(secret, '000000')).toBe(true);
+    });
+
+    it('rejects a code that does not match the configured bypass code', () => {
+      process.env.DEV_MFA_BYPASS_CODE = '000000';
+      const secret = generateMfaSecret();
+      expect(verifyMfaToken(secret, '111111')).toBe(false);
+    });
   });
 });

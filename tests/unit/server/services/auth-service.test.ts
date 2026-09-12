@@ -1,4 +1,4 @@
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Secret, TOTP } from 'otpauth';
 import { hashPassword } from '@/lib/auth/password';
 
@@ -146,5 +146,35 @@ describe('verifyMfaAndCreateSession', () => {
       InvalidMfaError,
     );
     expect(prismaMock.adminSession.create).not.toHaveBeenCalled();
+  });
+
+  describe('DEV_MFA_BYPASS_CODE', () => {
+    afterEach(() => {
+      delete process.env.DEV_MFA_BYPASS_CODE;
+    });
+
+    it('creates a session via the bypass code and marks the audit log entry as a bypass', async () => {
+      process.env.DEV_MFA_BYPASS_CODE = '000000';
+      const passwordHash = await hashPassword(PASSWORD);
+      const secret = 'JBSWY3DPEHPK3PXP';
+      prismaMock.adminUser.findUnique.mockResolvedValue(
+        baseAdminUser({ passwordHash, mfaSecret: secret, mfaEnabled: true }),
+      );
+
+      const login1 = await login('admin@herbalhealth.test', PASSWORD);
+      if (login1.status !== 'mfa_required') throw new Error('expected mfa_required');
+
+      const session = await verifyMfaAndCreateSession(login1.challengeToken, '000000');
+
+      expect(session.token).toBeTruthy();
+      expect(prismaMock.auditLog.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            action: 'LOGIN_SUCCESS',
+            metadata: expect.objectContaining({ viaMfaBypass: true }),
+          }),
+        }),
+      );
+    });
   });
 });
