@@ -4,6 +4,7 @@ import { getAdminSession } from '@/lib/auth/require-admin';
 
 const NAV_LINKS = [
   { href: '/admin/events', label: 'Events' },
+  { href: '/admin/orders', label: 'Orders' },
   { href: '/admin/locations', label: 'Locations' },
   { href: '/admin/instructors', label: 'Instructors' },
 ];

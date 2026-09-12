@@ -120,6 +120,41 @@ ticket-inventory logic was added — `EventTicketType` is catalog metadata only,
 - No card data touches our database.
 - E2E test: browse → select ticket → checkout → test payment → confirmation → registration lookup.
 
+Gate status: lint, typecheck, and unit+integration tests (106/106) pass locally, including a real-
+Postgres concurrency test (`tests/integration/inventory-concurrency.test.ts`, 10 concurrent buyers
+against a 5-seat ticket type: exactly 5 succeed, 5 fail with `InsufficientInventoryError`, and
+`reservedCount + soldCount` never exceeds `capacity`) and a real-Postgres duplicate-webhook test
+(`tests/integration/webhook-idempotency.test.ts`, two truly concurrent deliveries of the same
+Stripe event id produce exactly one `Payment` row and one `Registration` row). Oversell protection
+uses a Serializable transaction (retried on Prisma's write-conflict error) around the inventory
+read+increment, not raw SQL locking. Webhook idempotency is enforced by the DB unique constraint
+on `Payment.providerEventId`, created inside the same transaction that pays the order and mints
+registrations — no separate read-then-write idempotency check. Order totals are computed only from
+`EventTicketType.priceMinorUnits` server-side; `checkoutRequestSchema` (`src/lib/validation/checkout.ts`)
+has no price/total field at all, so the checkout API route (`src/app/api/checkout/route.ts`) cannot
+read one off the request body even by mistake (grep-verifiable: no `req.body.price` /
+`.total` anywhere in the checkout or webhook path). No card data (PAN/CVV) ever reaches our server
+or database — payment collection happens entirely on Stripe-hosted Checkout; only a `Payment` row
+with `providerPaymentId`/`providerEventId` references is stored. `EventTicketType` gained
+`reservedCount`/`soldCount` fields (migration `20260911183725_phase4_ticketing_checkout_payments`)
+rather than a redundant TicketType model. Attendee collection is limited to firstName, lastName,
+email, phone, country, organization, accessibility notes — no medical/health fields, per CLAUDE.md.
+Registration references (`HHS-<year>-<6-char>` via `src/lib/registration/reference.ts`) are
+CSPRNG-generated, not sequential, and unit-tested for format/uniqueness/non-enumerability in
+isolation. `POST /api/jobs/expire-reservations` (bearer-gated by `CRON_SECRET`) releases stale
+`PENDING` reservations, re-checking order status inside its own transaction so a webhook that pays
+an order between the query and the transaction is never clobbered. `npm run test:e2e` self-skips
+the same way Phase 2/3's e2e specs do — Playwright's Chromium still cannot install on this local
+machine (macOS 13); `tests/e2e/checkout.spec.ts` additionally self-skips if `PAYMENT_SECRET_KEY`
+isn't configured for Stripe test mode, and depends on the same seeded `/admin/login` precondition
+as the Phase 3 admin-flow e2e tests — verify both via CI once Chromium and a Stripe test key are
+available there. A minimal checkout UI (`/checkout`, `/checkout/success`, `/checkout/cancelled`,
+`/registrations/lookup`) was added to make the flow actually exercisable end to end; it is
+intentionally plain (no design-system pass) since `docs/design/` doesn't yet cover a checkout
+screen. Refund UI, admin order management, and real email delivery are explicitly Phase 5/6 scope
+and were not touched — `sendRegistrationConfirmationEmail` (`src/lib/email/registration-confirmation.ts`)
+is a stubbed no-op call point the webhook handler already calls.
+
 ---
 
 ## Phase 5 — Orders, Registrations, Refunds, Attendee Management
@@ -133,6 +168,30 @@ ticket-inventory logic was added — `EventTicketType` is catalog metadata only,
 
 **Exit gate:** refund updates order/registration/payment state consistently with the provider;
 attendee export is permission-gated; every state transition is audit-logged.
+
+Gate status: lint, typecheck, and unit tests (136/136) pass locally. `refundOrder`
+(`src/server/services/refund-service.ts`) is Admin-only (`refunds:process`, ADMIN role only per
+`rbac.ts`) and never trusts a client-supplied refund amount — it always refunds exactly
+`Payment.amountMinorUnits` from the stored succeeded payment (grep-verifiable: the refund API route
+takes no body). The Stripe provider call happens outside the DB transaction (a real refund can't be
+rolled back); once it succeeds, `Payment`→`REFUNDED`, `Order`→`REFUNDED`, all of the order's
+`Registration`s → `CANCELLED`, and sold inventory is released (`releaseSoldCapacity`) atomically in
+one `prisma.$transaction`, with an `order.refunded` audit log entry inside the same transaction.
+Attendee actions (resend confirmation, cancel, mark attended, transfer, notes) live in
+`registration-service.ts`, each gated by `attendees:viewPii`/`attendees:export` and each writing an
+audit log entry (`registration.confirmationResent`, `registration.cancelled`,
+`registration.markedAttended`, `registration.transferred`, `attendee.noteAdded`). "Cancel" (registration
+status only) is intentionally kept separate from "Refund" (money + registration cancellation
+together) — per spec §17 these are distinct attendee actions, and cancelling a registration without
+a refund does not release paid inventory or touch the Payment record. Attendee CSV export
+(`GET /api/admin/attendees/export`) is gated by `attendees:export` (ADMIN-only). Two new Attendee
+fields were added (`internalNotes`, `attendedAt`, migration `20260911234629_phase5_orders_registrations_refunds`)
+to back the notes and mark-attended actions — neither is health/medical data. No dedicated
+integration test was added for the refund transaction (unlike Phase 4's oversell/idempotency tests)
+since a single-order refund isn't concurrency-sensitive the way reservation and webhook delivery
+are; the unit tests fully exercise the transaction shape against a mocked Prisma client. `npm run
+test:e2e` continues to self-skip on this machine for the same pre-existing Playwright/macOS 13
+reason documented in Phases 2-4 — verify via CI.
 
 ---
 

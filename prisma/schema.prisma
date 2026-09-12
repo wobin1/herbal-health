@@ -193,10 +193,12 @@ model Event {
   createdAt          DateTime    @default(now())
   updatedAt          DateTime    @updatedAt
 
-  location     Location?          @relation(fields: [locationId], references: [id])
-  instructors  EventInstructor[]
-  ticketTypes  EventTicketType[]
-  faqOverrides EventFaqOverride[]
+  location      Location?          @relation(fields: [locationId], references: [id])
+  instructors   EventInstructor[]
+  ticketTypes   EventTicketType[]
+  faqOverrides  EventFaqOverride[]
+  orders        Order[]
+  registrations Registration[]
 
   @@index([status, isFeatured, sortOrder])
   @@index([locationId])
@@ -223,6 +225,8 @@ model EventTicketType {
   priceMinorUnits Int
   currency        String    @default("USD")
   capacity        Int
+  reservedCount   Int       @default(0)
+  soldCount       Int       @default(0)
   salesStartAt    DateTime?
   salesEndAt      DateTime?
   refundPolicy    String?
@@ -230,9 +234,145 @@ model EventTicketType {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
-  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  event      Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  orderItems OrderItem[]
 
   @@index([eventId])
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  EXPIRED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+enum RegistrationStatus {
+  CONFIRMED
+  CANCELLED
+}
+
+model Order {
+  id                      String      @id @default(cuid())
+  eventId                 String
+  status                  OrderStatus @default(PENDING)
+  totalMinorUnits         Int
+  currency                String      @default("USD")
+  buyerEmail              String
+  buyerName               String
+  reservationExpiresAt    DateTime?
+  stripeCheckoutSessionId String?     @unique
+  createdAt               DateTime    @default(now())
+  updatedAt               DateTime    @updatedAt
+
+  event           Event                        @relation(fields: [eventId], references: [id])
+  items           OrderItem[]
+  payments        Payment[]
+  attendees       Attendee[]
+  registrations   Registration[]
+  termAcceptances RegistrationTermAcceptance[]
+
+  @@index([eventId])
+  @@index([status, reservationExpiresAt])
+}
+
+model OrderItem {
+  id                  String   @id @default(cuid())
+  orderId             String
+  eventTicketTypeId   String
+  quantity            Int
+  unitPriceMinorUnits Int
+  subtotalMinorUnits  Int
+  createdAt           DateTime @default(now())
+
+  order           Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  eventTicketType EventTicketType @relation(fields: [eventTicketTypeId], references: [id])
+  attendees       Attendee[]
+  registrations   Registration[]
+
+  @@index([orderId])
+  @@index([eventTicketTypeId])
+}
+
+model Attendee {
+  id                 String   @id @default(cuid())
+  orderId            String
+  orderItemId        String
+  firstName          String
+  lastName           String
+  email              String
+  phone              String
+  country            String
+  organization       String?
+  accessibilityNotes String?
+  internalNotes      String?
+  attendedAt         DateTime?
+  createdAt          DateTime @default(now())
+
+  order        Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderItem    OrderItem     @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  registration Registration?
+
+  @@index([orderId])
+  @@index([orderItemId])
+}
+
+model Registration {
+  id          String             @id @default(cuid())
+  reference   String             @unique
+  orderId     String
+  orderItemId String
+  attendeeId  String             @unique
+  eventId     String
+  status      RegistrationStatus @default(CONFIRMED)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  order     Order     @relation(fields: [orderId], references: [id])
+  orderItem OrderItem @relation(fields: [orderItemId], references: [id])
+  attendee  Attendee  @relation(fields: [attendeeId], references: [id])
+  event     Event     @relation(fields: [eventId], references: [id])
+
+  @@index([orderId])
+  @@index([eventId])
+}
+
+model RegistrationTermAcceptance {
+  id           String   @id @default(cuid())
+  orderId      String
+  termsVersion String
+  acceptedAt   DateTime @default(now())
+  ipAddress    String?
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+}
+
+model Payment {
+  id                String        @id @default(cuid())
+  orderId           String
+  provider          String        @default("stripe")
+  providerPaymentId String?
+  providerEventId   String        @unique
+  status            PaymentStatus @default(PENDING)
+  amountMinorUnits  Int
+  currency          String        @default("USD")
+  rawPayload        Json?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id])
+
+  @@index([orderId])
 }
 
 model EventFaqOverride {

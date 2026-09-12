@@ -1,0 +1,24 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { requirePermission, UnauthorizedError, ForbiddenError } from '@/lib/auth/require-admin';
+import { errorResponse } from '@/lib/http/errors';
+import { attendeeNoteSchema } from '@/lib/validation/attendees';
+import { addAttendeeNote } from '@/server/services/registration-service';
+
+export async function POST(request: NextRequest, ctx: RouteContext<'/api/admin/attendees/[id]/notes'>) {
+  try {
+    const session = await requirePermission('attendees:viewPii');
+    const { id } = await ctx.params;
+    const body = await request.json().catch(() => null);
+    const parsed = attendeeNoteSchema.safeParse(body);
+    if (!parsed.success) {
+      return errorResponse(400, 'INVALID_INPUT', 'Invalid note payload');
+    }
+    const ipAddress = request.headers.get('x-forwarded-for');
+    await addAttendeeNote(id, parsed.data.note, { actorId: session.adminUser.id, ipAddress });
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    if (error instanceof UnauthorizedError) return errorResponse(401, 'UNAUTHENTICATED', 'Not signed in');
+    if (error instanceof ForbiddenError) return errorResponse(403, 'FORBIDDEN', 'Insufficient permissions');
+    return errorResponse(500, 'INTERNAL_ERROR', 'Unable to save note');
+  }
+}

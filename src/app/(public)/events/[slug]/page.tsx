@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import Link from 'next/link';
 import type { Metadata } from 'next';
 import { getPublicEventBySlug } from '@/server/services/event-service';
 import { getEventStatusCta } from '@/lib/events/status-cta';
@@ -132,11 +133,22 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
           </h2>
           <ul className="mt-3 space-y-2 text-neutral-600">
             {event.ticketTypes.map((ticket) => (
-              <li key={ticket.id}>
-                {ticket.name} — {(ticket.priceMinorUnits / 100).toLocaleString('en-US', {
-                  style: 'currency',
-                  currency: ticket.currency,
-                })}
+              <li key={ticket.id} className="flex items-center justify-between gap-4">
+                <span>
+                  {ticket.name} —{' '}
+                  {(ticket.priceMinorUnits / 100).toLocaleString('en-US', {
+                    style: 'currency',
+                    currency: ticket.currency,
+                  })}
+                </span>
+                {event.status === 'ON_SALE' ? (
+                  <Link
+                    href={`/checkout?eventId=${event.id}&ticketTypeId=${ticket.id}`}
+                    className="inline-block rounded-full bg-primary-950 px-4 py-2 text-sm font-medium text-neutral-50"
+                  >
+                    Select
+                  </Link>
+                ) : null}
               </li>
             ))}
           </ul>
