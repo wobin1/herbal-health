@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { Reveal } from '@/components/motion/reveal';
 
 const DATE_FORMATTER = new Intl.DateTimeFormat('en-US', {
   weekday: 'short',
@@ -40,7 +41,7 @@ export function HomepageUpcomingSeminars({ events }: { events: UpcomingSeminarEv
       </div>
 
       <div className="relative mx-auto grid max-w-6xl gap-10 px-6 py-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] lg:items-center">
-        <div>
+        <Reveal>
           <p className="text-accent-500/90 text-sm font-semibold tracking-[0.2em] uppercase">
             Get Involved
           </p>
@@ -57,15 +58,15 @@ export function HomepageUpcomingSeminars({ events }: { events: UpcomingSeminarEv
           </p>
           <Link
             href="/events"
-            className="border-neutral-50/40 text-neutral-50/90 hover:border-neutral-50 hover:text-neutral-50 mt-6 inline-block border-b text-sm font-medium transition-colors"
+            className="border-neutral-50/40 text-neutral-50/90 hover:border-neutral-50 hover:text-neutral-50 mt-6 inline-block border-b text-sm font-medium transition-colors duration-base ease-premium"
           >
             See all seminars
           </Link>
-        </div>
+        </Reveal>
 
         <ul className="divide-neutral-50/15 divide-y border-neutral-50/15 lg:border-t lg:border-b">
-          {events.map((event) => (
-            <li key={event.id} className="flex items-center justify-between gap-4 py-5">
+          {events.map((event, index) => (
+            <Reveal key={event.id} as="li" delayMs={index * 80} className="flex items-center justify-between gap-4 py-5">
               <div>
                 <p className="text-accent-500/90 text-sm font-semibold">
                   {DATE_FORMATTER.format(event.startAt)}
@@ -78,11 +79,11 @@ export function HomepageUpcomingSeminars({ events }: { events: UpcomingSeminarEv
               </div>
               <Link
                 href={`/events/${event.slug}`}
-                className="border-neutral-50/50 text-neutral-50 hover:bg-neutral-50 hover:text-primary-950 inline-flex shrink-0 items-center justify-center rounded-full border px-5 py-2 text-sm font-medium transition-colors"
+                className="border-neutral-50/50 text-neutral-50 hover:bg-neutral-50 hover:text-primary-950 inline-flex shrink-0 items-center justify-center rounded-full border px-5 py-2 text-sm font-medium transition-colors duration-base ease-premium"
               >
                 Attend
               </Link>
-            </li>
+            </Reveal>
           ))}
         </ul>
       </div>

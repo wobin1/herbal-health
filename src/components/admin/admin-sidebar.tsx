@@ -16,6 +16,7 @@ import {
   UsersIcon,
   XIcon,
 } from '@/components/admin/icons';
+import { SpinnerIcon } from '@/components/icons';
 
 type NavLink = {
   href: string;
@@ -67,7 +68,26 @@ export function AdminSidebar({ email }: { email: string }) {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [mobileClosing, setMobileClosing] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+
+  function closeMobile() {
+    const reduceMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduceMotion) {
+      setMobileOpen(false);
+      return;
+    }
+    setMobileClosing(true);
+  }
+
+  function handleMobileAnimationEnd() {
+    if (mobileClosing) {
+      setMobileOpen(false);
+      setMobileClosing(false);
+    }
+  }
 
   async function handleLogout() {
     setLoggingOut(true);
@@ -100,9 +120,13 @@ export function AdminSidebar({ email }: { email: string }) {
         type="button"
         onClick={handleLogout}
         disabled={loggingOut}
-        className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-neutral-50/75 transition-colors hover:bg-neutral-50/10 hover:text-neutral-50 disabled:opacity-60"
+        className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-neutral-50/75 transition-colors duration-fast ease-premium hover:bg-neutral-50/10 hover:text-neutral-50 disabled:opacity-60"
       >
-        <LogOutIcon className="h-5 w-5 shrink-0 text-neutral-50/60" />
+        {loggingOut ? (
+          <SpinnerIcon className="h-5 w-5 shrink-0 animate-spin-smooth text-neutral-50/60" />
+        ) : (
+          <LogOutIcon className="h-5 w-5 shrink-0 text-neutral-50/60" />
+        )}
         {loggingOut ? 'Signing out…' : 'Sign out'}
       </button>
     </div>
@@ -130,23 +154,30 @@ export function AdminSidebar({ email }: { email: string }) {
           <button
             type="button"
             aria-label="Close menu"
-            onClick={() => setMobileOpen(false)}
-            className="absolute inset-0 bg-black/40"
+            onClick={closeMobile}
+            className={`absolute inset-0 bg-black/40 ${
+              mobileClosing ? 'animate-admin-backdrop-out' : 'animate-admin-backdrop'
+            }`}
           />
-          <div className="relative flex h-full w-72 max-w-[85vw] flex-col bg-primary-950 py-4 shadow-xl">
+          <div
+            onAnimationEnd={handleMobileAnimationEnd}
+            className={`relative flex h-full w-72 max-w-[85vw] flex-col bg-primary-950 py-4 shadow-xl ${
+              mobileClosing ? 'animate-slide-out-left' : 'animate-slide-in-left'
+            }`}
+          >
             <div className="flex items-center justify-between px-3">
               {brand}
               <button
                 type="button"
-                onClick={() => setMobileOpen(false)}
+                onClick={closeMobile}
                 aria-label="Close menu"
-                className="rounded-lg p-2 text-neutral-50 hover:bg-neutral-50/10"
+                className="rounded-lg p-2 text-neutral-50 transition-colors duration-fast ease-premium hover:bg-neutral-50/10"
               >
                 <XIcon className="h-5 w-5" />
               </button>
             </div>
             <div className="mt-4 flex flex-1 flex-col overflow-y-auto">
-              <NavList pathname={pathname} onNavigate={() => setMobileOpen(false)} />
+              <NavList pathname={pathname} onNavigate={closeMobile} />
             </div>
             {accountFooter}
           </div>
@@ -154,7 +185,10 @@ export function AdminSidebar({ email }: { email: string }) {
       )}
 
       {/* Desktop sidebar */}
-      <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:w-64 lg:flex-col lg:bg-primary-950">
+      <aside
+        style={{ viewTransitionName: 'admin-sidebar' }}
+        className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:w-64 lg:flex-col lg:bg-primary-950"
+      >
         <div className="border-b border-neutral-50/10 py-3">{brand}</div>
         <div className="flex flex-1 flex-col overflow-y-auto py-4">
           <NavList pathname={pathname} />

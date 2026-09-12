@@ -80,7 +80,7 @@ export interface PublicEventFilters {
   status?: EventStatus;
 }
 
-export async function listPublicEvents(filters: PublicEventFilters) {
+export async function listPublicEvents(filters: PublicEventFilters, pageParams: PageParams) {
   const where: Prisma.EventWhereInput = {
     status: filters.status ? filters.status : { in: PUBLICLY_VISIBLE_EVENT_STATUSES },
   };
@@ -101,11 +101,18 @@ export async function listPublicEvents(filters: PublicEventFilters) {
     ];
   }
 
-  return prisma.event.findMany({
-    where,
-    include: { location: true, instructors: { include: { instructor: true } }, ticketTypes: true },
-    orderBy: [{ sortOrder: 'asc' }, { startAt: 'asc' }],
-  });
+  const { skip, take } = toSkipTake(pageParams);
+  const [events, total] = await Promise.all([
+    prisma.event.findMany({
+      where,
+      include: { location: true, instructors: { include: { instructor: true } }, ticketTypes: true },
+      orderBy: [{ sortOrder: 'asc' }, { startAt: 'asc' }],
+      skip,
+      take,
+    }),
+    prisma.event.count({ where }),
+  ]);
+  return buildPageResult(events, total, pageParams);
 }
 
 export async function getPublicEventBySlug(slug: string) {
@@ -266,16 +273,28 @@ export async function startSales(id: string, actor: Actor): Promise<Event> {
 }
 
 export async function cancelEvent(id: string, actor: Actor): Promise<Event> {
+  const existing = await requireEvent(id);
+  if (existing.status === 'CANCELLED' || existing.status === 'COMPLETED') {
+    throw new EventValidationError(`Cannot cancel an event that is already ${existing.status}`);
+  }
   const event = await transitionStatus(id, 'CANCELLED', 'event.cancelled', actor);
   await notifyRegisteredAttendees(event, 'EVENT_CANCELLATION', 'event-cancelled');
   return event;
 }
 
 export async function completeEvent(id: string, actor: Actor): Promise<Event> {
+  const existing = await requireEvent(id);
+  if (existing.status !== 'ON_SALE' && existing.status !== 'CLOSED') {
+    throw new EventValidationError('Only an event that is ON_SALE or CLOSED can be marked complete');
+  }
   return transitionStatus(id, 'COMPLETED', 'event.completed', actor);
 }
 
 export async function closeSales(id: string, actor: Actor): Promise<Event> {
+  const existing = await requireEvent(id);
+  if (existing.status !== 'ON_SALE') {
+    throw new EventValidationError('Only an ON_SALE event can have sales closed');
+  }
   return transitionStatus(id, 'CLOSED', 'event.closed', actor);
 }
 

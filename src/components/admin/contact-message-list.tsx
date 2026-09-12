@@ -91,7 +91,7 @@ export function ContactMessageList({
         return (
           <li
             key={message.id}
-            className={`group px-4 py-4 transition-colors hover:bg-neutral-50 ${!message.isRead ? 'bg-accent-500/[0.04]' : ''}`}
+            className={`group px-4 py-4 transition-colors duration-fast ease-premium hover:bg-neutral-50 ${!message.isRead ? 'bg-accent-500/[0.04]' : ''}`}
           >
             <div className="flex flex-wrap items-start justify-between gap-3">
               <button
@@ -119,7 +119,7 @@ export function ContactMessageList({
                 <button
                   type="button"
                   onClick={() => handleDelete(message.id)}
-                  className="font-medium text-red-700 opacity-0 underline-offset-2 transition-opacity duration-150 hover:underline group-hover:opacity-100 group-focus-within:opacity-100 focus:opacity-100"
+                  className="font-medium text-red-700 opacity-0 underline-offset-2 transition-opacity duration-fast ease-premium hover:underline group-hover:opacity-100 group-focus-within:opacity-100 focus:opacity-100"
                 >
                   Delete
                 </button>

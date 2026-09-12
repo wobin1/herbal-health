@@ -19,7 +19,7 @@ export function PageHero({
         aria-hidden="true"
         className="from-primary-700/40 pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,var(--tw-gradient-stops))] to-transparent"
       />
-      <div className="relative mx-auto max-w-6xl px-6">
+      <div className="animate-fade-in-up relative mx-auto max-w-6xl px-6">
         <span className="inline-flex items-center rounded-full border border-neutral-50/20 bg-neutral-50/5 px-4 py-1 text-xs font-medium uppercase tracking-widest text-neutral-50/80">
           {badge}
         </span>

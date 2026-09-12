@@ -1,12 +1,15 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { ArrowLeftIcon } from '@/components/admin/icons';
+import { ButtonSpinner } from '@/components/icons';
+
+export { ButtonSpinner };
 
 export function BackLink({ href, label }: { href: string; label: string }) {
   return (
     <Link
       href={href}
-      className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900"
+      className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-neutral-500 transition-colors duration-fast ease-premium hover:text-neutral-900"
     >
       <ArrowLeftIcon className="h-4 w-4" />
       {label}
@@ -23,17 +26,18 @@ export const tableClassName = 'w-full border-collapse text-left text-sm';
 export const theadClassName = 'sticky top-0 z-10 bg-neutral-50/95 backdrop-blur-sm';
 export const thClassName = 'px-4 py-3 text-xs font-medium uppercase tracking-wide text-neutral-500';
 export const thNumClassName = `${thClassName} text-right`;
-export const trClassName = 'group border-b border-neutral-100 last:border-0 transition-colors hover:bg-neutral-50';
+export const trClassName =
+  'group border-b border-neutral-100 last:border-0 transition-colors duration-fast ease-premium hover:bg-neutral-50';
 export const tdClassName = 'px-4 py-3 align-middle text-neutral-600';
 export const tdNumClassName = `${tdClassName} text-right tabular-nums`;
 export const tdPrimaryClassName = 'px-4 py-3 align-middle font-medium text-neutral-900';
 
 /** Actions cell that only appears on row hover/focus, so dense tables stay quiet at rest. */
 export const rowActionsClassName =
-  'flex items-center justify-end gap-3 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100 focus-within:opacity-100';
+  'flex items-center justify-end gap-3 opacity-0 transition-opacity duration-fast ease-premium group-hover:opacity-100 group-focus-within:opacity-100 focus-within:opacity-100';
 
 export function Skeleton({ className = '' }: { className?: string }) {
-  return <div className={`animate-pulse rounded-md bg-neutral-200 ${className}`} />;
+  return <div className={`animate-shimmer rounded-md ${className}`} />;
 }
 
 export function TableSkeleton({

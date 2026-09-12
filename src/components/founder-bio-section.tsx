@@ -59,10 +59,10 @@ export function FounderBioSection({
                     setActiveTab('biography');
                     setExpanded(false);
                   }}
-                  className={`pb-1 transition-colors ${
+                  className={`pb-1 transition-colors duration-fast ease-premium ${
                     activeTab === 'biography'
                       ? 'text-accent-500 border-accent-500 border-b'
-                      : 'border-b border-transparent text-neutral-50/45 hover:text-neutral-50/80'
+                      : 'border-b border-transparent text-neutral-50/65 hover:text-neutral-50/90'
                   }`}
                 >
                   Biography
@@ -77,7 +77,7 @@ export function FounderBioSection({
                     className={`pb-1 transition-colors ${
                       activeTab === 'mission'
                         ? 'text-accent-500 border-accent-500 border-b'
-                        : 'border-b border-transparent text-neutral-50/45 hover:text-neutral-50/80'
+                        : 'border-b border-transparent text-neutral-50/65 hover:text-neutral-50/90'
                     }`}
                   >
                     Mission
@@ -105,8 +105,8 @@ export function FounderBioSection({
             </ul>
 
             <div
-              className={`border-accent-500/50 relative mt-8 max-w-[62ch] space-y-4 border-l pl-6 text-[0.95rem] leading-[1.8] text-neutral-50/80 ${
-                expanded ? '' : 'max-h-[360px] overflow-hidden'
+              className={`border-accent-500/50 relative mt-8 max-w-[62ch] space-y-4 overflow-hidden border-l pl-6 text-[0.95rem] leading-[1.8] text-neutral-50/80 transition-[max-height] duration-slow ease-premium ${
+                expanded ? 'max-h-[3000px]' : 'max-h-[360px]'
               }`}
             >
               {activeTab === 'biography'

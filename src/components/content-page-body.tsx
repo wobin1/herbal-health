@@ -17,7 +17,7 @@ export function ContentPageBody({
   const missionParagraphs = missionText?.split(/\n{2,}/).filter(Boolean) ?? [];
 
   return (
-    <article className="mx-auto max-w-3xl px-6 py-20">
+    <article className="animate-fade-in-up mx-auto max-w-3xl px-6 py-20">
       <h1 className="text-3xl font-semibold tracking-tight text-neutral-900">{title}</h1>
       {imageSrc && (
         <Image

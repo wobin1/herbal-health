@@ -58,11 +58,11 @@ describe('GET /api/admin/contact-messages', () => {
       items: [],
       unreadCount: 0,
       page: 2,
-      pageSize: 20,
+      pageSize: 15,
       total: 0,
       totalPages: 1,
     });
     await GET(fakeRequest('https://admin.example.com/api/admin/contact-messages?page=2'));
-    expect(listContactMessagesMock).toHaveBeenCalledWith({ page: 2, pageSize: 20 });
+    expect(listContactMessagesMock).toHaveBeenCalledWith({ page: 2, pageSize: 15 });
   });
 });

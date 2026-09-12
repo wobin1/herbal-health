@@ -20,7 +20,10 @@ export function SiteFooter({ content }: { content: HomepageContent }) {
           <div>
             <h2 className="text-base font-semibold">Contact</h2>
             <p className="mt-2 text-sm text-neutral-100/80">
-              <a href={`mailto:${content.footerContactEmail}`} className="hover:text-accent-500">
+              <a
+                href={`mailto:${content.footerContactEmail}`}
+                className="transition-colors duration-fast ease-premium hover:text-accent-500"
+              >
                 {content.footerContactEmail}
               </a>
             </p>
@@ -33,7 +36,10 @@ export function SiteFooter({ content }: { content: HomepageContent }) {
             <ul className="mt-2 space-y-1 text-sm text-neutral-100/80">
               {LEGAL_LINKS.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href} className="hover:text-accent-500">
+                  <Link
+                    href={link.href}
+                    className="transition-colors duration-fast ease-premium hover:text-accent-500"
+                  >
                     {link.label}
                   </Link>
                 </li>

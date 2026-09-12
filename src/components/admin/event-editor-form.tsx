@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { TicketTypeManager, type TicketTypeRow } from '@/components/admin/ticket-type-manager';
+import { ButtonSpinner } from '@/components/admin/ui';
 import { useConfirm } from '@/components/confirm-dialog';
 
 const TABS = [
@@ -199,6 +200,58 @@ export function EventEditorForm({
     }
   }
 
+  async function handleCloseSales() {
+    if (!initialValues?.id) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/admin/events/${initialValues.id}/close-sales`, { method: 'POST' });
+      const data = await response.json();
+      if (!response.ok) {
+        setError(data.error?.message ?? 'Unable to close sales');
+        return;
+      }
+      router.refresh();
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleComplete() {
+    if (!initialValues?.id) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/admin/events/${initialValues.id}/complete`, { method: 'POST' });
+      const data = await response.json();
+      if (!response.ok) {
+        setError(data.error?.message ?? 'Unable to complete event');
+        return;
+      }
+      router.refresh();
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleCancelEvent() {
+    if (!initialValues?.id) return;
+    if (!(await confirm('Cancel this event? Registered attendees will be notified.'))) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/admin/events/${initialValues.id}/cancel`, { method: 'POST' });
+      const data = await response.json();
+      if (!response.ok) {
+        setError(data.error?.message ?? 'Unable to cancel event');
+        return;
+      }
+      router.refresh();
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   async function handleDelete() {
     if (!initialValues?.id) return;
     if (!(await confirm('Delete this event? This cannot be undone.'))) return;
@@ -229,8 +282,8 @@ export function EventEditorForm({
             aria-selected={activeTab === tab}
             className={
               activeTab === tab
-                ? 'border-b-2 border-primary-950 px-3 py-2 text-sm font-medium text-primary-950'
-                : 'px-3 py-2 text-sm font-medium text-neutral-500 hover:text-neutral-900'
+                ? 'border-b-2 border-primary-950 px-3 py-2 text-sm font-medium text-primary-950 transition-colors duration-fast ease-premium'
+                : 'border-b-2 border-transparent px-3 py-2 text-sm font-medium text-neutral-500 transition-colors duration-fast ease-premium hover:text-neutral-900'
             }
             onClick={() => setActiveTab(tab)}
           >
@@ -376,8 +429,9 @@ export function EventEditorForm({
           type="button"
           onClick={() => handleSave()}
           disabled={submitting}
-          className="rounded-full bg-primary-950 px-6 py-2 text-sm font-medium text-neutral-50 disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-full bg-primary-950 px-6 py-2 text-sm font-medium text-neutral-50 transition-colors duration-fast ease-premium hover:bg-primary-900 disabled:opacity-50"
         >
+          {submitting ? <ButtonSpinner /> : null}
           {isEdit ? 'Save Changes' : 'Create Event'}
         </button>
         {isEdit && canPublish && values.status === 'DRAFT' ? (
@@ -385,7 +439,7 @@ export function EventEditorForm({
             type="button"
             onClick={handlePublish}
             disabled={submitting}
-            className="rounded-full border border-primary-950 px-6 py-2 text-sm font-medium text-primary-950 disabled:opacity-50"
+            className="rounded-full border border-primary-950 px-6 py-2 text-sm font-medium text-primary-950 transition-colors duration-fast ease-premium hover:bg-primary-950/5 disabled:opacity-50"
           >
             Publish
           </button>
@@ -395,9 +449,39 @@ export function EventEditorForm({
             type="button"
             onClick={handleStartSales}
             disabled={submitting}
-            className="rounded-full border border-primary-950 px-6 py-2 text-sm font-medium text-primary-950 disabled:opacity-50"
+            className="rounded-full border border-primary-950 px-6 py-2 text-sm font-medium text-primary-950 transition-colors duration-fast ease-premium hover:bg-primary-950/5 disabled:opacity-50"
           >
             Start Sales
+          </button>
+        ) : null}
+        {isEdit && canPublish && values.status === 'ON_SALE' ? (
+          <button
+            type="button"
+            onClick={handleCloseSales}
+            disabled={submitting}
+            className="rounded-full border border-primary-950 px-6 py-2 text-sm font-medium text-primary-950 transition-colors duration-fast ease-premium hover:bg-primary-950/5 disabled:opacity-50"
+          >
+            Close Sales
+          </button>
+        ) : null}
+        {isEdit && canPublish && (values.status === 'ON_SALE' || values.status === 'CLOSED') ? (
+          <button
+            type="button"
+            onClick={handleComplete}
+            disabled={submitting}
+            className="rounded-full border border-primary-950 px-6 py-2 text-sm font-medium text-primary-950 transition-colors duration-fast ease-premium hover:bg-primary-950/5 disabled:opacity-50"
+          >
+            Mark Complete
+          </button>
+        ) : null}
+        {isEdit && canPublish && values.status !== 'CANCELLED' && values.status !== 'COMPLETED' ? (
+          <button
+            type="button"
+            onClick={handleCancelEvent}
+            disabled={submitting}
+            className="rounded-full border border-red-700 px-6 py-2 text-sm font-medium text-red-700 transition-colors duration-fast ease-premium hover:bg-red-700/5 disabled:opacity-50"
+          >
+            Cancel Event
           </button>
         ) : null}
         {isEdit ? <span className="text-sm text-neutral-500">Status: {values.status}</span> : null}
@@ -406,7 +490,7 @@ export function EventEditorForm({
             type="button"
             onClick={handleDelete}
             disabled={submitting}
-            className="ml-auto text-sm font-medium text-red-700 underline-offset-2 hover:underline disabled:opacity-50"
+            className="ml-auto text-sm font-medium text-red-700 underline-offset-2 transition-opacity duration-fast ease-premium hover:underline disabled:opacity-50"
           >
             Delete Event
           </button>

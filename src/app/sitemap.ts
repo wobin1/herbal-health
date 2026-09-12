@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { listPublicEvents } from '@/server/services/event-service';
+import { MAX_PAGE_SIZE } from '@/lib/pagination';
 
 const STATIC_ROUTES = ['', '/about', '/contact', '/faq', '/terms', '/privacy', '/refund-policy', '/disclaimer', '/events'];
 
@@ -9,7 +10,7 @@ function siteUrl(): string {
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = siteUrl();
-  const events = await listPublicEvents({});
+  const { items: events } = await listPublicEvents({}, { page: 1, pageSize: MAX_PAGE_SIZE });
 
   const staticEntries: MetadataRoute.Sitemap = STATIC_ROUTES.map((path) => ({
     url: `${base}${path}`,

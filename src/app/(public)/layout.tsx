@@ -1,3 +1,4 @@
+import { ViewTransition } from 'react';
 import { SiteHeader } from '@/components/site-header';
 import { SiteFooter } from '@/components/site-footer';
 import { getHomepageContent } from '@/server/services/content-service';
@@ -15,7 +16,9 @@ export default async function PublicLayout({ children }: LayoutProps<'/'>) {
       </a>
       <SiteHeader />
       <main id="main-content" className="flex-1">
-        {children}
+        <ViewTransition default="none" enter="page-fade" exit="page-fade">
+          {children}
+        </ViewTransition>
       </main>
       <SiteFooter content={content} />
     </>

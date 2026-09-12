@@ -1,11 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useConfirm } from '@/components/confirm-dialog';
 import { PaginationControls } from '@/components/admin/pagination-controls';
 import { UsersIcon } from '@/components/admin/icons';
+import { AdminModal } from '@/components/admin/admin-modal';
 import {
+  ButtonSpinner,
   EmptyState,
   rowActionsClassName,
   tableClassName,
@@ -51,14 +53,9 @@ export function InstructorManager({
 
   const isEditing = form.id !== null;
 
-  useEffect(() => {
-    if (!isOpen) return;
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') setIsOpen(false);
-    }
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen]);
+  function closeModal() {
+    setIsOpen(false);
+  }
 
   function openAddModal() {
     setError(null);
@@ -103,7 +100,6 @@ export function InstructorManager({
         setError(data.error?.message ?? 'Unable to save instructor');
         return;
       }
-      setForm(EMPTY);
       setIsOpen(false);
       router.refresh();
     } finally {
@@ -121,7 +117,6 @@ export function InstructorManager({
       return;
     }
     if (form.id === id) {
-      setForm(EMPTY);
       setIsOpen(false);
     }
     router.refresh();
@@ -201,67 +196,58 @@ export function InstructorManager({
         basePath={pagination.basePath}
       />
 
-      {isOpen ? (
-        <div
-          className="animate-admin-backdrop fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-neutral-900/40 px-4 py-8"
-          onClick={() => setIsOpen(false)}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="instructor-modal-title"
-            className="animate-admin-panel w-full max-w-2xl rounded-xl bg-white p-6 shadow-lg ring-1 ring-neutral-900/5"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2">
-              <h2 id="instructor-modal-title" className="text-lg font-semibold text-neutral-900 sm:col-span-2">
-                {isEditing ? 'Edit Instructor' : 'Add Instructor'}
-              </h2>
-              {error ? (
-                <p
-                  role="alert"
-                  className="sm:col-span-2 rounded-md border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-800"
-                >
-                  {error}
-                </p>
-              ) : null}
-              <LabeledInput label="Name" value={form.name} onChange={(v) => setForm((f) => ({ ...f, name: v }))} required />
-              <LabeledInput label="Slug" value={form.slug} onChange={(v) => setForm((f) => ({ ...f, slug: v }))} required />
-              <LabeledTextarea
-                label="Short Bio"
-                value={form.shortBio}
-                onChange={(v) => setForm((f) => ({ ...f, shortBio: v }))}
-                required
-              />
-              <LabeledTextarea
-                label="Full Bio"
-                value={form.fullBio}
-                onChange={(v) => setForm((f) => ({ ...f, fullBio: v }))}
-                required
-              />
-              <div className="flex gap-3 sm:col-span-2">
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="rounded-full bg-primary-950 px-6 py-2 text-sm font-medium text-neutral-50 transition-colors hover:bg-primary-900 disabled:opacity-50"
-                >
-                  {isEditing ? 'Save Changes' : 'Add Instructor'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setForm(EMPTY);
-                    setIsOpen(false);
-                  }}
-                  className="rounded-full border border-neutral-300 px-6 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
+      <AdminModal
+        open={isOpen}
+        onClose={closeModal}
+        onExited={() => setForm(EMPTY)}
+        labelledBy="instructor-modal-title"
+        className="max-w-2xl"
+      >
+        <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2">
+          <h2 id="instructor-modal-title" className="pr-8 text-xl font-semibold tracking-tight text-neutral-900 sm:col-span-2">
+            {isEditing ? 'Edit Instructor' : 'Add Instructor'}
+          </h2>
+          {error ? (
+            <p
+              role="alert"
+              className="sm:col-span-2 rounded-md border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-800"
+            >
+              {error}
+            </p>
+          ) : null}
+          <LabeledInput label="Name" value={form.name} onChange={(v) => setForm((f) => ({ ...f, name: v }))} required />
+          <LabeledInput label="Slug" value={form.slug} onChange={(v) => setForm((f) => ({ ...f, slug: v }))} required />
+          <LabeledTextarea
+            label="Short Bio"
+            value={form.shortBio}
+            onChange={(v) => setForm((f) => ({ ...f, shortBio: v }))}
+            required
+          />
+          <LabeledTextarea
+            label="Full Bio"
+            value={form.fullBio}
+            onChange={(v) => setForm((f) => ({ ...f, fullBio: v }))}
+            required
+          />
+          <div className="flex gap-3 sm:col-span-2">
+            <button
+              type="submit"
+              disabled={submitting}
+              className="inline-flex items-center gap-2 rounded-full bg-primary-950 px-6 py-2 text-sm font-medium text-neutral-50 transition-colors duration-fast ease-premium hover:bg-primary-900 disabled:opacity-50"
+            >
+              {submitting ? <ButtonSpinner /> : null}
+              {isEditing ? 'Save Changes' : 'Add Instructor'}
+            </button>
+            <button
+              type="button"
+              onClick={closeModal}
+              className="rounded-full border border-neutral-300 px-6 py-2 text-sm font-medium text-neutral-700 transition-colors duration-fast ease-premium hover:bg-neutral-50"
+            >
+              Cancel
+            </button>
           </div>
-        </div>
-      ) : null}
+        </form>
+      </AdminModal>
       {dialog}
     </div>
   );

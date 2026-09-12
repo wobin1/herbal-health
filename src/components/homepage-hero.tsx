@@ -40,7 +40,7 @@ export function HomepageHero({
       </div>
 
       <div className="relative mx-auto w-full max-w-6xl px-6 py-16">
-        <div className="flex max-w-xl flex-col items-start">
+        <div className="animate-fade-in-up flex max-w-xl flex-col items-start">
           <p className="text-accent-500/90 text-sm font-semibold tracking-[0.2em] uppercase">
             {eyebrow}
           </p>
@@ -58,16 +58,16 @@ export function HomepageHero({
           <div className="mt-9 flex flex-wrap items-center gap-x-8 gap-y-4">
             <Link
               href={ctaHref}
-              className="group inline-flex items-center gap-3 rounded-full bg-neutral-50 py-2 pr-2 pl-6 text-sm font-semibold text-neutral-900 shadow-lg transition-transform hover:scale-[1.02]"
+              className="group inline-flex items-center gap-3 rounded-full bg-neutral-50 py-2 pr-2 pl-6 text-sm font-semibold text-neutral-900 shadow-lg transition-transform duration-base ease-premium hover:scale-[1.02]"
             >
               {ctaLabel}
-              <span className="bg-accent-500 flex h-9 w-9 items-center justify-center rounded-full text-neutral-50 transition-colors">
+              <span className="bg-accent-500 flex h-9 w-9 items-center justify-center rounded-full text-neutral-50 transition-transform duration-base ease-premium group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
                 <ArrowUpRightIcon className="h-4 w-4" />
               </span>
             </Link>
             <Link
               href="/about"
-              className="text-neutral-50/80 hover:text-neutral-50 border-neutral-50/40 hover:border-neutral-50 border-b text-sm font-medium transition-colors"
+              className="text-neutral-50/80 hover:text-neutral-50 border-neutral-50/40 hover:border-neutral-50 border-b text-sm font-medium transition-colors duration-base ease-premium"
             >
               Meet Dr. Goodman
             </Link>

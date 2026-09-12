@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useConfirm } from '@/components/confirm-dialog';
+import { ButtonSpinner } from '@/components/admin/ui';
 
 export function EventDeleteButton({ eventId }: { eventId: string }) {
   const router = useRouter();
@@ -33,8 +34,9 @@ export function EventDeleteButton({ eventId }: { eventId: string }) {
         type="button"
         onClick={handleDelete}
         disabled={deleting}
-        className="font-medium text-red-700 underline-offset-2 hover:underline disabled:opacity-50"
+        className="inline-flex items-center gap-1.5 font-medium text-red-700 underline-offset-2 transition-opacity duration-fast ease-premium hover:underline disabled:opacity-50"
       >
+        {deleting ? <ButtonSpinner className="h-3.5 w-3.5" /> : null}
         Delete
       </button>
       {error ? <span className="ml-2 text-xs text-red-600">{error}</span> : null}

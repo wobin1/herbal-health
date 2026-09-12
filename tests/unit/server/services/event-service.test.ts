@@ -8,6 +8,7 @@ const prismaMock = {
     create: vi.fn(),
     update: vi.fn(),
     delete: vi.fn(),
+    count: vi.fn(),
   },
   eventTicketType: {
     findUnique: vi.fn(),
@@ -65,28 +66,55 @@ beforeEach(() => {
 });
 
 describe('listPublicEvents', () => {
+  const PAGE_1 = { page: 1, pageSize: 6 };
+
+  beforeEach(() => {
+    prismaMock.event.count.mockResolvedValue(0);
+  });
+
   it('only queries publicly visible statuses', async () => {
     prismaMock.event.findMany.mockResolvedValue([]);
-    await listPublicEvents({});
+    await listPublicEvents({}, PAGE_1);
     const call = prismaMock.event.findMany.mock.calls[0][0];
     expect(call.where.status.in).toEqual(['COMING_SOON', 'PUBLISHED', 'ON_SALE', 'SOLD_OUT', 'CLOSED', 'CANCELLED', 'COMPLETED']);
   });
 
   it('applies keyword, city, state, and date filters', async () => {
     prismaMock.event.findMany.mockResolvedValue([]);
-    await listPublicEvents({
-      keyword: 'herbal',
-      city: 'Austin',
-      state: 'TX',
-      dateFrom: new Date('2026-01-01'),
-      dateTo: new Date('2026-02-01'),
-    });
+    await listPublicEvents(
+      {
+        keyword: 'herbal',
+        city: 'Austin',
+        state: 'TX',
+        dateFrom: new Date('2026-01-01'),
+        dateTo: new Date('2026-02-01'),
+      },
+      PAGE_1,
+    );
     const call = prismaMock.event.findMany.mock.calls[0][0];
     expect(call.where.city).toBe('Austin');
     expect(call.where.state).toBe('TX');
     expect(call.where.startAt.gte).toEqual(new Date('2026-01-01'));
     expect(call.where.startAt.lte).toEqual(new Date('2026-02-01'));
     expect(call.where.OR).toBeDefined();
+  });
+
+  it('applies skip/take derived from the page params and the same filters to the count', async () => {
+    prismaMock.event.findMany.mockResolvedValue([]);
+    await listPublicEvents({ city: 'Austin' }, { page: 3, pageSize: 6 });
+    const findManyCall = prismaMock.event.findMany.mock.calls[0][0];
+    expect(findManyCall.skip).toBe(12);
+    expect(findManyCall.take).toBe(6);
+    const countCall = prismaMock.event.count.mock.calls[0][0];
+    expect(countCall.where.city).toBe('Austin');
+  });
+
+  it('returns a page result with items, page, pageSize, total, and totalPages', async () => {
+    const events = [{ ...COMPLETE_EVENT, status: 'ON_SALE' }];
+    prismaMock.event.findMany.mockResolvedValue(events);
+    prismaMock.event.count.mockResolvedValue(13);
+    const result = await listPublicEvents({}, { page: 2, pageSize: 6 });
+    expect(result).toEqual({ items: events, page: 2, pageSize: 6, total: 13, totalPages: 3 });
   });
 });
 
@@ -140,6 +168,12 @@ describe('publishEvent', () => {
 });
 
 describe('cancelEvent', () => {
+  it('refuses to cancel an event that is already CANCELLED or COMPLETED', async () => {
+    prismaMock.event.findUnique.mockResolvedValue({ ...COMPLETE_EVENT, status: 'COMPLETED' });
+    await expect(cancelEvent('evt-1', ACTOR)).rejects.toThrow(EventValidationError);
+    expect(prismaMock.event.update).not.toHaveBeenCalled();
+  });
+
   it('sets status to CANCELLED and records an audit log', async () => {
     prismaMock.event.findUnique.mockResolvedValue(COMPLETE_EVENT);
     prismaMock.event.update.mockResolvedValue({ ...COMPLETE_EVENT, status: 'CANCELLED', city: 'Austin', state: 'TX' });
@@ -169,18 +203,37 @@ describe('cancelEvent', () => {
 });
 
 describe('completeEvent', () => {
+  it('refuses to complete an event that has never gone on sale', async () => {
+    prismaMock.event.findUnique.mockResolvedValue({ ...COMPLETE_EVENT, status: 'DRAFT' });
+    await expect(completeEvent('evt-1', ACTOR)).rejects.toThrow(EventValidationError);
+    expect(prismaMock.event.update).not.toHaveBeenCalled();
+  });
+
   it('sets status to COMPLETED and records an audit log', async () => {
-    prismaMock.event.findUnique.mockResolvedValue(COMPLETE_EVENT);
+    prismaMock.event.findUnique.mockResolvedValue({ ...COMPLETE_EVENT, status: 'ON_SALE' });
     prismaMock.event.update.mockResolvedValue({ ...COMPLETE_EVENT, status: 'COMPLETED' });
     const result = await completeEvent('evt-1', ACTOR);
     expect(result.status).toBe('COMPLETED');
     expect(auditLogMock).toHaveBeenCalledWith(expect.objectContaining({ action: 'event.completed' }));
   });
+
+  it('allows completing an event whose sales were already closed', async () => {
+    prismaMock.event.findUnique.mockResolvedValue({ ...COMPLETE_EVENT, status: 'CLOSED' });
+    prismaMock.event.update.mockResolvedValue({ ...COMPLETE_EVENT, status: 'COMPLETED' });
+    const result = await completeEvent('evt-1', ACTOR);
+    expect(result.status).toBe('COMPLETED');
+  });
 });
 
 describe('closeSales', () => {
+  it('refuses to close sales on an event that is not ON_SALE', async () => {
+    prismaMock.event.findUnique.mockResolvedValue({ ...COMPLETE_EVENT, status: 'PUBLISHED' });
+    await expect(closeSales('evt-1', ACTOR)).rejects.toThrow(EventValidationError);
+    expect(prismaMock.event.update).not.toHaveBeenCalled();
+  });
+
   it('sets status to CLOSED and records an audit log', async () => {
-    prismaMock.event.findUnique.mockResolvedValue(COMPLETE_EVENT);
+    prismaMock.event.findUnique.mockResolvedValue({ ...COMPLETE_EVENT, status: 'ON_SALE' });
     prismaMock.event.update.mockResolvedValue({ ...COMPLETE_EVENT, status: 'CLOSED' });
     const result = await closeSales('evt-1', ACTOR);
     expect(result.status).toBe('CLOSED');

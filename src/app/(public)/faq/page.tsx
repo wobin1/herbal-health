@@ -24,7 +24,7 @@ export default async function FaqPage() {
       </p>
 
       {faqs.length > 0 ? (
-        <dl className="mt-14 grid gap-x-10 gap-y-10 sm:grid-cols-2">
+        <div className="mt-14 grid gap-x-10 gap-y-10 sm:grid-cols-2">
           {faqs.map((faq) => (
             <div key={faq.id} className="flex gap-4">
               <span
@@ -48,12 +48,12 @@ export default async function FaqPage() {
                 </svg>
               </span>
               <div>
-                <dt className="font-semibold text-neutral-900">{faq.question}</dt>
-                <dd className="mt-1 text-neutral-600">{faq.answer}</dd>
+                <h2 className="font-semibold text-neutral-900">{faq.question}</h2>
+                <p className="mt-1 text-neutral-600">{faq.answer}</p>
               </div>
             </div>
           ))}
-        </dl>
+        </div>
       ) : (
         <p className="mt-14 text-neutral-600">No questions have been published yet.</p>
       )}

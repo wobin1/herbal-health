@@ -73,7 +73,7 @@ describe('getPublishedEducationalFocusItems', () => {
 });
 
 describe('getFeaturedEvents', () => {
-  it('queries only featured, publicly visible events ordered by sortOrder', async () => {
+  it('queries only featured, publicly visible events ordered by start date, limited to 5', async () => {
     prismaMock.event.findMany.mockResolvedValue([]);
     await getFeaturedEvents();
     expect(prismaMock.event.findMany).toHaveBeenCalledWith({
@@ -81,7 +81,8 @@ describe('getFeaturedEvents', () => {
         isFeatured: true,
         status: { in: ['COMING_SOON', 'PUBLISHED', 'ON_SALE', 'SOLD_OUT'] },
       },
-      orderBy: { sortOrder: 'asc' },
+      orderBy: { startAt: 'asc' },
+      take: 5,
     });
   });
 });

@@ -9,7 +9,7 @@ export default function AdminError({ error, reset }: { error: Error & { digest?:
   }, [error]);
 
   return (
-    <div className="flex flex-col items-center gap-4 rounded-xl border border-dashed border-neutral-300 bg-neutral-50/60 px-6 py-16 text-center">
+    <div className="animate-fade-in-up flex flex-col items-center gap-4 rounded-xl border border-dashed border-neutral-300 bg-neutral-50/60 px-6 py-16 text-center">
       <div className="rounded-full bg-red-50 p-3 text-red-600">
         <AlertTriangleIcon className="h-7 w-7" />
       </div>
@@ -22,7 +22,7 @@ export default function AdminError({ error, reset }: { error: Error & { digest?:
       <button
         type="button"
         onClick={reset}
-        className="rounded-full bg-primary-950 px-5 py-2 text-sm font-medium text-neutral-50 transition-colors hover:bg-primary-900"
+        className="rounded-full bg-primary-950 px-5 py-2 text-sm font-medium text-neutral-50 transition-colors duration-fast ease-premium hover:bg-primary-900"
       >
         Try again
       </button>

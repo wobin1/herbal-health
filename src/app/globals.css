@@ -28,6 +28,12 @@
   --font-size-3xl: 2.75rem;
 
   --spacing-section: 6rem;
+
+  /* Shared motion tokens. */
+  --ease-premium: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 150ms;
+  --duration-base: 250ms;
+  --duration-slow: 450ms;
 }
 
 @theme inline {
@@ -60,6 +66,24 @@ body {
   outline-offset: 2px;
 }
 
+/* Shared transition utility classes (Tailwind v4 has no themeable duration/ease
+   namespace for named tokens, so these are plain CSS rather than @theme entries). */
+.ease-premium {
+  transition-timing-function: var(--ease-premium);
+}
+
+.duration-fast {
+  transition-duration: var(--duration-fast);
+}
+
+.duration-base {
+  transition-duration: var(--duration-base);
+}
+
+.duration-slow {
+  transition-duration: var(--duration-slow);
+}
+
 @keyframes admin-backdrop-in {
   from {
     opacity: 0;
@@ -88,9 +112,216 @@ body {
   animation: admin-panel-in 0.15s ease-out;
 }
 
+.animate-admin-backdrop-out {
+  animation: admin-backdrop-in var(--duration-fast) ease-in reverse;
+}
+
+.animate-admin-panel-out {
+  animation: admin-panel-in var(--duration-fast) ease-in reverse;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-out-right {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes slide-in-left {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-out-left {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes shimmer-sweep {
+  from {
+    background-position: 150% 0;
+  }
+  to {
+    background-position: -50% 0;
+  }
+}
+
+@keyframes spin-smooth {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in var(--duration-base) var(--ease-premium) both;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up var(--duration-slow) var(--ease-premium) both;
+}
+
+.animate-scale-in {
+  animation: scale-in var(--duration-base) var(--ease-premium) both;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right var(--duration-base) var(--ease-premium) both;
+}
+
+.animate-slide-out-right {
+  animation: slide-out-right var(--duration-fast) ease-in both;
+}
+
+.animate-slide-in-left {
+  animation: slide-in-left var(--duration-base) var(--ease-premium) both;
+}
+
+.animate-slide-out-left {
+  animation: slide-out-left var(--duration-fast) ease-in both;
+}
+
+.animate-spin-smooth {
+  animation: spin-smooth 0.7s linear infinite;
+}
+
+.animate-shimmer {
+  background-image: linear-gradient(
+    100deg,
+    var(--color-neutral-100) 40%,
+    #ffffff 50%,
+    var(--color-neutral-100) 60%
+  );
+  background-size: 200% 100%;
+  animation: shimmer-sweep 1.6s ease-in-out infinite;
+}
+
+/* Reveal-on-scroll: hidden until the Reveal component marks it visible. */
+.reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity var(--duration-slow) var(--ease-premium),
+    transform var(--duration-slow) var(--ease-premium);
+}
+
+.reveal-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Anchor persistent chrome so it never moves during a view transition. */
+::view-transition-group(site-header),
+::view-transition-group(admin-sidebar) {
+  animation: none;
+  z-index: 100;
+}
+
+::view-transition-old(site-header),
+::view-transition-old(admin-sidebar) {
+  display: none;
+}
+
+::view-transition-new(site-header),
+::view-transition-new(admin-sidebar) {
+  animation: none;
+}
+
+::view-transition-old(.page-fade),
+::view-transition-new(.page-fade) {
+  animation-duration: var(--duration-base);
+  animation-timing-function: var(--ease-premium);
+}
+
+::view-transition-old(.page-fade) {
+  animation-name: fade-in;
+  animation-direction: reverse;
+}
+
+::view-transition-new(.page-fade) {
+  animation-name: fade-in-up;
+}
+
+::view-transition {
+  pointer-events: none;
+}
+
+/*
+ * Reduced-motion safety net. Rather than gating every individual transform/
+ * animation utility used across the app (transition-transform, transition-
+ * colors, transition-[max-height], the .animate-* classes above, etc.), we
+ * collapse all of them to effectively-instant here — the standard approach
+ * for a codebase with animation spread across many components via Tailwind
+ * utility classes rather than a single component tree.
+ */
 @media (prefers-reduced-motion: reduce) {
-  .animate-admin-backdrop,
-  .animate-admin-panel {
-    animation: none;
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
   }
 }

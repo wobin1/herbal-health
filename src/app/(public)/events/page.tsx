@@ -4,6 +4,10 @@ import type { Metadata } from 'next';
 import { listPublicEvents } from '@/server/services/event-service';
 import { getEventStatusCta } from '@/lib/events/status-cta';
 import { PageHero } from '@/components/page-hero';
+import { parsePageParams } from '@/lib/pagination';
+import { PaginationControls } from '@/components/admin/pagination-controls';
+
+const EVENTS_PAGE_SIZE = 12;
 
 export const metadata: Metadata = {
   title: 'Upcoming Seminars',
@@ -35,6 +39,7 @@ interface EventsPageProps {
     state?: string;
     dateFrom?: string;
     dateTo?: string;
+    page?: string;
   }>;
 }
 
@@ -47,7 +52,8 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
     dateFrom: params.dateFrom ? new Date(params.dateFrom) : undefined,
     dateTo: params.dateTo ? new Date(params.dateTo) : undefined,
   };
-  const events = await listPublicEvents(filters);
+  const pageParams = parsePageParams(params, EVENTS_PAGE_SIZE);
+  const { items: events, page, totalPages, total } = await listPublicEvents(filters, pageParams);
 
   return (
     <article>
@@ -122,7 +128,7 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
         </form>
 
         {events.length > 0 ? (
-          <ul className="-mt-8 grid gap-8 pb-20 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="-mt-8 grid gap-8 pb-8 sm:grid-cols-2 lg:grid-cols-3">
             {events.map((event) => {
               const cta = getEventStatusCta(event.status);
               const startingPrice = formatStartingPrice(event.ticketTypes);
@@ -177,6 +183,23 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
         ) : (
           <p className="pb-20 pt-2 text-neutral-600">No seminars match your search.</p>
         )}
+        {events.length > 0 ? (
+          <div className="pb-20">
+            <PaginationControls
+              page={page}
+              totalPages={totalPages}
+              total={total}
+              basePath="/events"
+              searchParams={{
+                keyword: params.keyword,
+                city: params.city,
+                state: params.state,
+                dateFrom: params.dateFrom,
+                dateTo: params.dateTo,
+              }}
+            />
+          </div>
+        ) : null}
       </div>
     </article>
   );

@@ -4,6 +4,7 @@ import { useState, type FormEvent } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { ButtonSpinner } from '@/components/admin/ui';
 
 type Stage =
   | { step: 'credentials' }
@@ -85,7 +86,7 @@ export default function AdminLoginPage() {
       <header className="absolute inset-x-0 top-0 flex items-center justify-between px-6 py-6 sm:px-10">
         <Link
           href="/"
-          className="flex items-center gap-2 text-sm font-medium text-white/90 hover:text-white"
+          className="flex items-center gap-2 text-sm font-medium text-white/90 transition-colors duration-fast ease-premium hover:text-white"
         >
           <span aria-hidden="true">&larr;</span> Back
         </Link>
@@ -101,13 +102,13 @@ export default function AdminLoginPage() {
         </span>
         <Link
           href="/contact"
-          className="text-sm font-medium text-white/90 hover:text-white"
+          className="text-sm font-medium text-white/90 transition-colors duration-fast ease-premium hover:text-white"
         >
           Contact support
         </Link>
       </header>
 
-      <div className="relative w-full max-w-sm rounded-2xl bg-white p-8 shadow-xl">
+      <div className="animate-scale-in relative w-full max-w-sm rounded-2xl bg-white p-8 shadow-xl">
         <h1 className="font-serif text-2xl text-primary-950">
           {stage.step === 'credentials' ? 'Log in to Herbal Health' : 'Verify your identity'}
         </h1>
@@ -161,8 +162,9 @@ export default function AdminLoginPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="mt-2 rounded-lg bg-primary-950 px-4 py-2.5 text-sm font-medium text-neutral-50 transition hover:bg-primary-900 disabled:opacity-60"
+              className="mt-2 inline-flex items-center justify-center gap-2 rounded-lg bg-primary-950 px-4 py-2.5 text-sm font-medium text-neutral-50 transition-colors duration-fast ease-premium hover:bg-primary-900 disabled:opacity-60"
             >
+              {submitting ? <ButtonSpinner /> : null}
               {submitting ? 'Signing in…' : 'Sign in'}
             </button>
           </form>
@@ -198,8 +200,9 @@ export default function AdminLoginPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="mt-2 rounded-lg bg-primary-950 px-4 py-2.5 text-sm font-medium text-neutral-50 transition hover:bg-primary-900 disabled:opacity-60"
+              className="mt-2 inline-flex items-center justify-center gap-2 rounded-lg bg-primary-950 px-4 py-2.5 text-sm font-medium text-neutral-50 transition-colors duration-fast ease-premium hover:bg-primary-900 disabled:opacity-60"
             >
+              {submitting ? <ButtonSpinner /> : null}
               {submitting ? 'Verifying…' : 'Verify and finish setup'}
             </button>
           </form>
@@ -228,8 +231,9 @@ export default function AdminLoginPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="mt-2 rounded-lg bg-primary-950 px-4 py-2.5 text-sm font-medium text-neutral-50 transition hover:bg-primary-900 disabled:opacity-60"
+              className="mt-2 inline-flex items-center justify-center gap-2 rounded-lg bg-primary-950 px-4 py-2.5 text-sm font-medium text-neutral-50 transition-colors duration-fast ease-premium hover:bg-primary-900 disabled:opacity-60"
             >
+              {submitting ? <ButtonSpinner /> : null}
               {submitting ? 'Verifying…' : 'Verify'}
             </button>
           </form>

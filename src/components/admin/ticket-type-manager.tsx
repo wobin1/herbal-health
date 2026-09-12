@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
+  ButtonSpinner,
   rowActionsClassName,
   tableClassName,
   tableShellClassName,
@@ -142,7 +143,7 @@ export function TicketTypeManager({ eventId, ticketTypes }: { eventId: string; t
                         type="button"
                         onClick={() => handleDelete(ticketType.id)}
                         disabled={submitting}
-                        className="text-sm font-medium text-red-700 underline-offset-2 hover:underline disabled:opacity-50"
+                        className="text-sm font-medium text-red-700 underline-offset-2 transition-opacity duration-fast ease-premium hover:underline disabled:opacity-50"
                       >
                         Delete
                       </button>
@@ -211,15 +212,16 @@ export function TicketTypeManager({ eventId, ticketTypes }: { eventId: string; t
           <button
             type="submit"
             disabled={submitting}
-            className="rounded-full bg-primary-950 px-6 py-2 text-sm font-medium text-neutral-50 transition-colors hover:bg-primary-900 disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-full bg-primary-950 px-6 py-2 text-sm font-medium text-neutral-50 transition-colors duration-fast ease-premium hover:bg-primary-900 disabled:opacity-50"
           >
+            {submitting ? <ButtonSpinner /> : null}
             {editingId ? 'Save Changes' : 'Add Ticket Type'}
           </button>
           {editingId ? (
             <button
               type="button"
               onClick={resetForm}
-              className="text-sm font-medium text-neutral-600 underline-offset-2 hover:underline"
+              className="text-sm font-medium text-neutral-600 underline-offset-2 transition-colors duration-fast ease-premium hover:underline"
             >
               Cancel
             </button>

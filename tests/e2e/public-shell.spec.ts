@@ -21,7 +21,10 @@ test('primary navigation links to the core public pages', async ({ page }) => {
   const nav = page.getByRole('navigation', { name: 'Primary' });
   await expect(nav.getByRole('link', { name: 'About' })).toHaveAttribute('href', '/about');
   await expect(nav.getByRole('link', { name: 'FAQ' })).toHaveAttribute('href', '/faq');
-  await expect(nav.getByRole('link', { name: 'Contact' })).toHaveAttribute('href', '/contact');
+  await expect(page.getByRole('banner').getByRole('link', { name: 'Contact' })).toHaveAttribute(
+    'href',
+    '/contact',
+  );
 });
 
 test('footer links to all required legal pages', async ({ page }) => {

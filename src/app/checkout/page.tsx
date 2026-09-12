@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { ButtonSpinner } from '@/components/icons';
 
 interface AttendeeFormState {
   firstName: string;
@@ -27,6 +28,14 @@ const EMPTY_ATTENDEE: AttendeeFormState = {
 const TERMS_VERSION = '2026-01-01';
 
 export default function CheckoutPage() {
+  return (
+    <Suspense fallback={null}>
+      <CheckoutForm />
+    </Suspense>
+  );
+}
+
+function CheckoutForm() {
   const searchParams = useSearchParams();
   const eventId = searchParams.get('eventId') ?? '';
   const ticketTypeId = searchParams.get('ticketTypeId') ?? '';
@@ -97,7 +106,7 @@ export default function CheckoutPage() {
   }
 
   return (
-    <main className="mx-auto max-w-xl px-6 py-20">
+    <main className="animate-fade-in-up mx-auto max-w-xl px-6 py-20">
       <h1 className="text-2xl font-semibold text-neutral-900">Checkout</h1>
       <form onSubmit={handleSubmit} className="mt-8 space-y-6" noValidate>
         <fieldset className="space-y-4">
@@ -112,7 +121,7 @@ export default function CheckoutPage() {
               required
               value={attendee.firstName}
               onChange={(e) => setAttendee({ ...attendee, firstName: e.target.value })}
-              className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2"
+              className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 transition-colors duration-fast ease-premium focus:border-primary-950 focus:outline-none focus:ring-2 focus:ring-primary-950/30"
             />
           </div>
 
@@ -125,7 +134,7 @@ export default function CheckoutPage() {
               required
               value={attendee.lastName}
               onChange={(e) => setAttendee({ ...attendee, lastName: e.target.value })}
-              className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2"
+              className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 transition-colors duration-fast ease-premium focus:border-primary-950 focus:outline-none focus:ring-2 focus:ring-primary-950/30"
             />
           </div>
 
@@ -139,7 +148,7 @@ export default function CheckoutPage() {
               required
               value={attendee.email}
               onChange={(e) => setAttendee({ ...attendee, email: e.target.value })}
-              className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2"
+              className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 transition-colors duration-fast ease-premium focus:border-primary-950 focus:outline-none focus:ring-2 focus:ring-primary-950/30"
             />
           </div>
 
@@ -152,7 +161,7 @@ export default function CheckoutPage() {
               required
               value={attendee.phone}
               onChange={(e) => setAttendee({ ...attendee, phone: e.target.value })}
-              className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2"
+              className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 transition-colors duration-fast ease-premium focus:border-primary-950 focus:outline-none focus:ring-2 focus:ring-primary-950/30"
             />
           </div>
 
@@ -165,7 +174,7 @@ export default function CheckoutPage() {
               required
               value={attendee.country}
               onChange={(e) => setAttendee({ ...attendee, country: e.target.value })}
-              className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2"
+              className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 transition-colors duration-fast ease-premium focus:border-primary-950 focus:outline-none focus:ring-2 focus:ring-primary-950/30"
             />
           </div>
 
@@ -177,7 +186,7 @@ export default function CheckoutPage() {
               id="organization"
               value={attendee.organization}
               onChange={(e) => setAttendee({ ...attendee, organization: e.target.value })}
-              className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2"
+              className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 transition-colors duration-fast ease-premium focus:border-primary-950 focus:outline-none focus:ring-2 focus:ring-primary-950/30"
             />
           </div>
 
@@ -189,7 +198,7 @@ export default function CheckoutPage() {
               id="accessibilityNotes"
               value={attendee.accessibilityNotes}
               onChange={(e) => setAttendee({ ...attendee, accessibilityNotes: e.target.value })}
-              className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2"
+              className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 transition-colors duration-fast ease-premium focus:border-primary-950 focus:outline-none focus:ring-2 focus:ring-primary-950/30"
             />
           </div>
         </fieldset>
@@ -205,7 +214,7 @@ export default function CheckoutPage() {
               required
               value={buyerName}
               onChange={(e) => setBuyerName(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2"
+              className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 transition-colors duration-fast ease-premium focus:border-primary-950 focus:outline-none focus:ring-2 focus:ring-primary-950/30"
             />
           </div>
           <div>
@@ -218,7 +227,7 @@ export default function CheckoutPage() {
               required
               value={buyerEmail}
               onChange={(e) => setBuyerEmail(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2"
+              className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 transition-colors duration-fast ease-premium focus:border-primary-950 focus:outline-none focus:ring-2 focus:ring-primary-950/30"
             />
           </div>
         </fieldset>
@@ -233,11 +242,11 @@ export default function CheckoutPage() {
           />
           <label htmlFor="terms" className="text-sm text-neutral-700">
             I have read and agree to the{' '}
-            <Link href="/terms" className="underline">
+            <Link href="/terms" className="underline transition-colors duration-fast ease-premium hover:text-primary-950">
               Terms
             </Link>{' '}
             and{' '}
-            <Link href="/disclaimer" className="underline">
+            <Link href="/disclaimer" className="underline transition-colors duration-fast ease-premium hover:text-primary-950">
               Disclaimer
             </Link>
             .
@@ -253,8 +262,9 @@ export default function CheckoutPage() {
         <button
           type="submit"
           disabled={submitting}
-          className="rounded-full bg-primary-950 px-6 py-3 text-sm font-medium text-neutral-50 disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-full bg-primary-950 px-6 py-3 text-sm font-medium text-neutral-50 transition-colors duration-fast ease-premium hover:bg-primary-900 disabled:opacity-50"
         >
+          {submitting ? <ButtonSpinner /> : null}
           {submitting ? 'Starting checkout…' : 'Continue to Payment'}
         </button>
       </form>

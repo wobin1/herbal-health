@@ -33,7 +33,7 @@ export function PaginationControls({
         {page > 1 ? (
           <Link
             href={hrefFor(page - 1)}
-            className="rounded-full border border-neutral-300 px-4 py-2 font-medium text-neutral-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+            className="rounded-full border border-neutral-300 px-4 py-2 font-medium text-neutral-700 transition-colors duration-fast ease-premium hover:bg-neutral-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
           >
             Previous
           </Link>
@@ -48,7 +48,7 @@ export function PaginationControls({
         {page < totalPages ? (
           <Link
             href={hrefFor(page + 1)}
-            className="rounded-full border border-neutral-300 px-4 py-2 font-medium text-neutral-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+            className="rounded-full border border-neutral-300 px-4 py-2 font-medium text-neutral-700 transition-colors duration-fast ease-premium hover:bg-neutral-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
           >
             Next
           </Link>
