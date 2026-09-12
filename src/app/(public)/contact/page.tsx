@@ -1,28 +1,23 @@
-import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ContactForm } from '@/components/contact-form';
 import { PageHero } from '@/components/page-hero';
-import { getContentPage, getHomepageContent } from '@/server/services/content-service';
+import { getHomepageContent } from '@/server/services/content-service';
+import { CONTACT_CONTENT } from '@/lib/content/static-pages';
 
-export async function generateMetadata(): Promise<Metadata> {
-  const page = await getContentPage('CONTACT');
-  return { title: page?.title ?? 'Contact', description: page?.metaDescription ?? undefined };
-}
+export const metadata: Metadata = {
+  title: CONTACT_CONTENT.title,
+};
 
 export default async function ContactPage() {
-  const [page, homepageContent] = await Promise.all([getContentPage('CONTACT'), getHomepageContent()]);
-  if (!page) notFound();
-
-  const paragraphs = page.body.split(/\n{2,}/).filter(Boolean);
-  const [intro, ...rest] = paragraphs;
+  const homepageContent = await getHomepageContent();
 
   return (
     <article>
       <PageHero
         badge="Herbal Health Seminar Series"
-        heading={page.title}
-        description={intro}
+        heading={CONTACT_CONTENT.title}
+        description={CONTACT_CONTENT.intro}
         imageSrc="https://images.unsplash.com/photo-1524758631624-e2822e304c36?q=80&w=2000&auto=format&fit=crop"
       />
 
@@ -33,13 +28,9 @@ export default async function ContactPage() {
               <ContactForm />
             </div>
 
-            {rest.length > 0 ? (
-              <div className="mt-10 space-y-4 text-sm text-neutral-600">
-                {rest.map((paragraph, index) => (
-                  <p key={index}>{paragraph}</p>
-                ))}
-              </div>
-            ) : null}
+            <div className="mt-10 space-y-4 text-sm text-neutral-600">
+              <p>{CONTACT_CONTENT.body}</p>
+            </div>
           </div>
 
           <aside className="bg-primary-950 h-fit rounded-2xl p-8 text-neutral-50">

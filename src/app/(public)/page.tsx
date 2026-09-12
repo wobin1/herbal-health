@@ -4,19 +4,19 @@ import {
   getHomepageContent,
   getPublishedEducationalFocusItems,
   getFeaturedEvents,
-  getPublishedFaqs,
 } from '@/server/services/content-service';
+import { FAQ_ITEMS } from '@/lib/content/static-pages';
 import { HomepageHero } from '@/components/homepage-hero';
 import { HomepageBenefits } from '@/components/homepage-benefits';
 import { HomepageUpcomingSeminars } from '@/components/homepage-upcoming-seminars';
 
 export default async function HomePage() {
-  const [content, focusItems, events, faqs] = await Promise.all([
+  const [content, focusItems, events] = await Promise.all([
     getHomepageContent(),
     getPublishedEducationalFocusItems(),
     getFeaturedEvents(),
-    getPublishedFaqs(),
   ]);
+  const faqs = FAQ_ITEMS;
 
   return (
     <>
@@ -34,7 +34,7 @@ export default async function HomePage() {
         items={focusItems.slice(0, 6)}
       />
 
-      {events.length > 0 ? <HomepageUpcomingSeminars events={events} /> : null}
+      <HomepageUpcomingSeminars events={events} />
 
       {faqs.length > 0 ? (
         <section className="bg-neutral-50 py-24" aria-labelledby="faq-heading">

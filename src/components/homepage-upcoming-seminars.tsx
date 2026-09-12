@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Reveal } from '@/components/motion/reveal';
+import { CalendarIcon } from '@/components/admin/icons';
 
 const DATE_FORMATTER = new Intl.DateTimeFormat('en-US', {
   weekday: 'short',
@@ -64,6 +65,19 @@ export function HomepageUpcomingSeminars({ events }: { events: UpcomingSeminarEv
           </Link>
         </Reveal>
 
+        {events.length === 0 ? (
+          <div className="border-neutral-50/15 flex flex-col items-center gap-4 border-t border-b px-4 py-14 text-center lg:py-0">
+            <div className="text-neutral-50/80 ring-neutral-50/20 flex h-14 w-14 items-center justify-center rounded-full bg-neutral-50/10 ring-1 ring-inset">
+              <CalendarIcon className="h-6 w-6" />
+            </div>
+            <div className="max-w-xs">
+              <p className="font-semibold text-neutral-50">No seminars on the calendar yet</p>
+              <p className="text-neutral-50/70 mt-1.5 text-sm leading-relaxed">
+                New dates are added regularly — check the events page or contact us to be notified.
+              </p>
+            </div>
+          </div>
+        ) : (
         <ul className="divide-neutral-50/15 divide-y border-neutral-50/15 lg:border-t lg:border-b">
           {events.map((event, index) => (
             <Reveal key={event.id} as="li" delayMs={index * 80} className="flex items-center justify-between gap-4 py-5">
@@ -86,6 +100,7 @@ export function HomepageUpcomingSeminars({ events }: { events: UpcomingSeminarEv
             </Reveal>
           ))}
         </ul>
+        )}
       </div>
     </section>
   );

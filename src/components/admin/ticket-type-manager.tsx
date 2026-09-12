@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ButtonSpinner,
+  EmptyState,
   rowActionsClassName,
   tableClassName,
   tableShellClassName,
@@ -15,6 +16,7 @@ import {
   thNumClassName,
   trClassName,
 } from '@/components/admin/ui';
+import { ReceiptIcon } from '@/components/admin/icons';
 
 export interface TicketTypeRow {
   id: string;
@@ -108,9 +110,12 @@ export function TicketTypeManager({ eventId, ticketTypes }: { eventId: string; t
   return (
     <div>
       {ticketTypes.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-neutral-300 bg-neutral-50/60 px-4 py-6 text-center text-sm text-neutral-500">
-          No ticket types yet.
-        </p>
+        <EmptyState
+          compact
+          icon={<ReceiptIcon className="h-5 w-5" />}
+          title="No ticket types yet"
+          description="Add a ticket type below to start selling for this event."
+        />
       ) : (
         <div className={`${tableShellClassName} overflow-x-auto`}>
           <table className={`${tableClassName} min-w-[500px]`}>

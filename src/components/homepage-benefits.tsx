@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import { Reveal } from '@/components/motion/reveal';
+import { LeafMarkIcon } from '@/components/icons';
 
 export function HomepageBenefits({
   heading,
@@ -21,6 +22,19 @@ export function HomepageBenefits({
           </h2>
         </Reveal>
 
+        {items.length === 0 ? (
+          <div className="mt-14 flex flex-col items-center gap-4 rounded-2xl border border-neutral-200 bg-white px-6 py-16 text-center shadow-sm">
+            <div className="text-primary-700 ring-primary-700/15 flex h-16 w-16 items-center justify-center rounded-full bg-neutral-100 ring-1 ring-inset">
+              <LeafMarkIcon className="h-7 w-7" />
+            </div>
+            <div className="max-w-sm">
+              <p className="text-base font-semibold text-neutral-900">Focus areas coming soon</p>
+              <p className="mt-1.5 text-sm leading-relaxed text-neutral-500">
+                We&apos;re putting together what you&apos;ll learn in our seminars — check back shortly.
+              </p>
+            </div>
+          </div>
+        ) : (
         <ul className="mt-14 grid gap-8 text-left sm:grid-cols-3">
           {items.map((item, index) => (
             <Reveal key={item.id} as="li" delayMs={index * 80} className="group">
@@ -40,6 +54,7 @@ export function HomepageBenefits({
             </Reveal>
           ))}
         </ul>
+        )}
       </div>
     </section>
   );

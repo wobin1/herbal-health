@@ -25,7 +25,7 @@ test('/events supports keyword and city search filters', async ({ page }) => {
   await page.goto('/events');
   await page.getByLabel('City').fill('Nonexistent City XYZ');
   await page.getByRole('button', { name: 'Search' }).click();
-  await expect(page.getByText('No seminars match your search.')).toBeVisible();
+  await expect(page.getByText('No seminars match your search')).toBeVisible();
 });
 
 test('admin can create and publish an event which then appears on /events and /events/[slug]', async ({

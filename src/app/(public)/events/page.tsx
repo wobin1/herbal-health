@@ -6,6 +6,8 @@ import { getEventStatusCta } from '@/lib/events/status-cta';
 import { PageHero } from '@/components/page-hero';
 import { parsePageParams } from '@/lib/pagination';
 import { PaginationControls } from '@/components/admin/pagination-controls';
+import { EmptyState } from '@/components/admin/ui';
+import { CalendarIcon } from '@/components/admin/icons';
 
 const EVENTS_PAGE_SIZE = 12;
 
@@ -54,6 +56,7 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
   };
   const pageParams = parsePageParams(params, EVENTS_PAGE_SIZE);
   const { items: events, page, totalPages, total } = await listPublicEvents(filters, pageParams);
+  const isFiltered = Object.values(filters).some((value) => value !== undefined);
 
   return (
     <article>
@@ -181,7 +184,27 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
             })}
           </ul>
         ) : (
-          <p className="pb-20 pt-2 text-neutral-600">No seminars match your search.</p>
+          <div className="pb-20 pt-2">
+            <EmptyState
+              icon={<CalendarIcon className="h-8 w-8" />}
+              title={isFiltered ? 'No seminars match your search' : 'No seminars scheduled yet'}
+              description={
+                isFiltered
+                  ? 'Try a broader keyword, or clear a filter like city, state, or date.'
+                  : 'New seminars are added regularly — check back soon or browse our other resources.'
+              }
+              action={
+                isFiltered ? (
+                  <Link
+                    href="/events"
+                    className="rounded-full border border-primary-950 px-5 py-2 text-sm font-medium text-primary-950 transition hover:bg-primary-950 hover:text-neutral-50"
+                  >
+                    Clear filters
+                  </Link>
+                ) : undefined
+              }
+            />
+          </div>
         )}
         {events.length > 0 ? (
           <div className="pb-20">

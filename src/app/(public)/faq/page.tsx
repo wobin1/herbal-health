@@ -1,14 +1,14 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import { getPublishedFaqs } from '@/server/services/content-service';
+import { FAQ_ITEMS } from '@/lib/content/static-pages';
 
 export const metadata: Metadata = {
   title: 'Frequently Asked Questions',
   description: 'Answers to common questions about the Herbal Health Seminar Series.',
 };
 
-export default async function FaqPage() {
-  const faqs = await getPublishedFaqs();
+export default function FaqPage() {
+  const faqs = FAQ_ITEMS;
 
   return (
     <article className="mx-auto max-w-5xl px-6 py-20">

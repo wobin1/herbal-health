@@ -28,32 +28,33 @@ async function main() {
     },
   });
 
-  await prisma.educationalFocusItem.createMany({
-    data: [
-      {
-        icon: 'shield',
-        title: 'Botanical Foundations',
-        description:
-          'Discover the core principles of plant-based medicine, including plant identification and the science of botanical synergy.',
-        sortOrder: 1,
-      },
-      {
-        icon: 'heart',
-        title: 'Traditional Remedies',
-        description:
-          'Learn to prepare and use traditional herbal preparations such as tinctures, infusions, and herbal salves for daily wellness.',
-        sortOrder: 2,
-      },
-      {
-        icon: 'certificate',
-        title: 'Wellness Integration',
-        description:
-          'Explore how herbal wisdom can be integrated into your daily life to support blood pressure and blood sugar balance.',
-        sortOrder: 3,
-      },
-    ],
-    skipDuplicates: true,
-  });
+  const educationalFocusItems: Array<{ icon: string; title: string; description: string; sortOrder: number }> = [
+    {
+      icon: 'shield',
+      title: 'Botanical Foundations',
+      description:
+        'Discover the core principles of plant-based medicine, including plant identification and the science of botanical synergy.',
+      sortOrder: 1,
+    },
+    {
+      icon: 'heart',
+      title: 'Traditional Remedies',
+      description:
+        'Learn to prepare and use traditional herbal preparations such as tinctures, infusions, and herbal salves for daily wellness.',
+      sortOrder: 2,
+    },
+    {
+      icon: 'certificate',
+      title: 'Wellness Integration',
+      description:
+        'Explore how herbal wisdom can be integrated into your daily life to support blood pressure and blood sugar balance.',
+      sortOrder: 3,
+    },
+  ];
+  for (const item of educationalFocusItems) {
+    const existing = await prisma.educationalFocusItem.findFirst({ where: { title: item.title } });
+    if (!existing) await prisma.educationalFocusItem.create({ data: item });
+  }
 
   await prisma.instructor.upsert({
     where: { slug: 'jane-doe' },

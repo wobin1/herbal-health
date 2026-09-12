@@ -1,17 +1,13 @@
-import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { FounderBioSection } from '@/components/founder-bio-section';
 import { PageHero } from '@/components/page-hero';
-import { getContentPage } from '@/server/services/content-service';
+import { ABOUT_CONTENT } from '@/lib/content/static-pages';
 
-export async function generateMetadata(): Promise<Metadata> {
-  const page = await getContentPage('ABOUT');
-  return { title: page?.title ?? 'About', description: page?.metaDescription ?? undefined };
-}
+export const metadata: Metadata = {
+  title: ABOUT_CONTENT.title,
+};
 
-export default async function AboutPage() {
-  const page = await getContentPage('ABOUT');
-  if (!page) notFound();
+export default function AboutPage() {
   return (
     <article>
       <PageHero
@@ -21,8 +17,8 @@ export default async function AboutPage() {
         imageSrc="https://images.unsplash.com/photo-1517705008128-361805f42e86?q=80&w=2000&auto=format&fit=crop"
       />
       <FounderBioSection
-        title={page.title}
-        body={page.body}
+        title={ABOUT_CONTENT.title}
+        body={ABOUT_CONTENT.body}
         imageSrc="/images/founder.webp"
         imageAlt="Founder of the Herbal Health Seminar Series"
         missionText="We are dedicated to preserving and sharing the ancient wisdom of herbal medicine. Our traveling seminars provide a professional, educational environment where participants can learn the foundational knowledge of plant-based wellness and traditional preparation methods. We believe in empowering adults with the tools to support their health through a natural, educational lens."

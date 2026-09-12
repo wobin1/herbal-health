@@ -75,25 +75,49 @@ export function TableSkeleton({
   );
 }
 
+/**
+ * Shared empty state for lists/tables with zero rows. Reads as a deliberate,
+ * still-under-construction slot rather than a broken or unfinished screen —
+ * a solid card (matching the table shell it replaces), a branded icon badge,
+ * and a clear next action rather than just an absence notice.
+ */
 export function EmptyState({
   title,
   description,
   icon,
   action,
+  compact = false,
 }: {
   title: string;
   description?: string;
   icon?: ReactNode;
   action?: ReactNode;
+  compact?: boolean;
 }) {
   return (
-    <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-neutral-300 bg-neutral-50/60 px-6 py-14 text-center">
-      {icon ? <div className="text-neutral-400">{icon}</div> : null}
-      <div>
-        <p className="text-sm font-medium text-neutral-900">{title}</p>
-        {description ? <p className="mt-1 text-sm text-neutral-500">{description}</p> : null}
+    <div
+      className={`flex flex-col items-center rounded-xl border border-neutral-200 bg-white text-center shadow-sm ${
+        compact ? 'gap-3 px-4 py-9' : 'gap-4 px-6 py-16'
+      }`}
+    >
+      {icon ? (
+        <div
+          className={`flex shrink-0 items-center justify-center rounded-full bg-neutral-100 text-primary-700 ring-1 ring-inset ring-neutral-200 ${
+            compact ? 'h-11 w-11 [&_svg]:h-5 [&_svg]:w-5' : 'h-16 w-16 [&_svg]:h-7 [&_svg]:w-7'
+          }`}
+        >
+          {icon}
+        </div>
+      ) : null}
+      <div className={compact ? 'max-w-xs' : 'max-w-sm'}>
+        <p className={`font-semibold text-neutral-900 ${compact ? 'text-sm' : 'text-base'}`}>{title}</p>
+        {description ? (
+          <p className={`mt-1.5 text-neutral-500 ${compact ? 'text-xs' : 'text-sm'} leading-relaxed`}>
+            {description}
+          </p>
+        ) : null}
       </div>
-      {action ? <div className="mt-1">{action}</div> : null}
+      {action ? <div className={compact ? 'mt-0.5' : 'mt-1'}>{action}</div> : null}
     </div>
   );
 }
