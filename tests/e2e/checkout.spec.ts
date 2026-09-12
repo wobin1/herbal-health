@@ -83,3 +83,68 @@ test('browse -> select ticket -> checkout -> test payment -> confirmation -> reg
   // registration-service unit/integration tests cover reference lookup.
   await expect(page.getByRole('heading', { name: 'Find Your Registration' })).toBeVisible();
 });
+
+/**
+ * Same flow as above, but through MockPaymentProvider instead of live
+ * Stripe test mode — this is what runs until real Stripe keys exist. Skips
+ * itself outside PAYMENT_PROVIDER=mock so it never runs against real Stripe.
+ */
+test('mock payment provider: browse -> select ticket -> checkout -> simulated payment -> confirmation -> registration lookup', async ({
+  page,
+  request,
+}) => {
+  test.skip(process.env.PAYMENT_PROVIDER !== 'mock', 'PAYMENT_PROVIDER is not set to mock in this environment');
+
+  const login = await request.post('/api/admin/login', {
+    data: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD },
+  });
+  test.skip(!login.ok(), 'Seed admin user not available in this environment');
+
+  const slug = `e2e-mock-checkout-${Date.now()}`;
+  const createResponse = await request.post('/api/admin/events', {
+    data: {
+      slug,
+      title: 'E2E Mock Checkout Seminar',
+      shortDescription: 'Short',
+      longDescription: 'Long',
+      startAt: '2027-03-01T10:00:00.000Z',
+      endAt: '2027-03-01T12:00:00.000Z',
+      timezone: 'America/Chicago',
+      city: 'Austin',
+      state: 'TX',
+      coverImageUrl: 'https://example.com/cover.jpg',
+    },
+  });
+  test.skip(!createResponse.ok(), 'Could not create event fixture for e2e mock checkout test');
+  const { event } = await createResponse.json();
+
+  await request.post(`/api/admin/events/${event.id}/ticket-types`, {
+    data: { name: 'General Admission', priceMinorUnits: 2500, capacity: 10 },
+  });
+  await request.post(`/api/admin/events/${event.id}/publish`);
+  await request.post(`/api/admin/events/${event.id}/on-sale`).catch(() => null);
+
+  await page.goto(`/events/${slug}`);
+  await page.getByRole('link', { name: 'Select' }).first().click();
+
+  await expect(page).toHaveURL(/\/checkout\?/);
+  await page.getByLabel('First Name').fill('Jane');
+  await page.getByLabel('Last Name').fill('Doe');
+  await page.getByLabel('Attendee Email').fill('jane.doe@example.com');
+  await page.getByLabel('Phone').fill('555-0100');
+  await page.getByLabel('Country').fill('US');
+  await page.getByLabel('Full Name').fill('Jane Doe');
+  await page.getByLabel('Email', { exact: true }).fill('jane.doe@example.com');
+  await page.getByLabel(/I have read and agree/).check();
+  await page.getByRole('button', { name: 'Continue to Payment' }).click();
+
+  await page.waitForURL(/\/checkout\/mock\//, { timeout: 15_000 });
+  await page.getByRole('button', { name: /Pay \(simulate success\)/ }).click();
+
+  await page.waitForURL(/\/checkout\/success/, { timeout: 20_000 });
+  await expect(page.getByRole('heading', { name: 'Thank you!' })).toBeVisible();
+
+  await page.waitForTimeout(1000);
+  await page.goto('/registrations/lookup');
+  await expect(page.getByRole('heading', { name: 'Find Your Registration' })).toBeVisible();
+});

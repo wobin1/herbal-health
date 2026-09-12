@@ -115,5 +115,9 @@ describeIfDb('inventory reservation under concurrency (real Postgres)', () => {
 
     const orderCount = await prisma.order.count({ where: { eventId, status: 'PENDING' } });
     expect(orderCount).toBe(5);
-  }, 30_000);
+    // 60s: against the real (remote) DB, 10 truly concurrent writers to one
+    // row means most attempts hit a Serializable conflict and retry, and
+    // each round trip carries real network latency — measured ~25s on a
+    // healthy connection, so 30s flaked under normal jitter.
+  }, 60_000);
 });

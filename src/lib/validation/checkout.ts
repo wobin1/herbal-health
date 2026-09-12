@@ -38,3 +38,7 @@ export const registrationLookupSchema = z.object({
   reference: z.string().trim().min(1).max(50),
   email: z.string().trim().email().max(320),
 });
+
+export const mockCheckoutPaySchema = z.object({
+  sessionId: z.string().trim().min(1).max(200),
+});

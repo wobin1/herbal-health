@@ -1,4 +1,4 @@
-import type { Prisma } from '@prisma/client';
+import type { Prisma, PrismaClient } from '@prisma/client';
 import { prisma } from '@/lib/db/client';
 
 export interface RecordAuditLogInput {
@@ -10,8 +10,17 @@ export interface RecordAuditLogInput {
   metadata?: Record<string, unknown> | null;
 }
 
-export async function recordAuditLog(input: RecordAuditLogInput): Promise<void> {
-  await prisma.auditLog.create({
+type Tx = Pick<PrismaClient, 'auditLog'> | Prisma.TransactionClient;
+
+/**
+ * Writes an audit log entry. When called from inside an open interactive
+ * transaction, pass that `tx` — using the global `prisma` client there would
+ * open a second pooled connection while the first is still held, which
+ * under concurrency starves the pool and can blow past the transaction's
+ * own timeout.
+ */
+export async function recordAuditLog(input: RecordAuditLogInput, tx: Tx = prisma): Promise<void> {
+  await tx.auditLog.create({
     data: {
       actorId: input.actorId ?? null,
       action: input.action,

@@ -100,13 +100,3 @@ export class StripePaymentProvider implements PaymentProvider {
     return { id: refund.id };
   }
 }
-
-let cachedProvider: PaymentProvider | null = null;
-
-/** Lazily constructed singleton — avoids requiring env vars at import time (e.g. in tests). */
-export function getPaymentProvider(): PaymentProvider {
-  if (!cachedProvider) {
-    cachedProvider = new StripePaymentProvider();
-  }
-  return cachedProvider;
-}

@@ -87,13 +87,16 @@ export async function createPendingOrder(
       })),
     });
 
-    await recordAuditLog({
-      action: 'order.created',
-      entityType: 'Order',
-      entityId: order.id,
-      ipAddress: actor.ipAddress,
-      metadata: { eventId: input.eventId, ticketTypeId: input.ticketTypeId, quantity: input.quantity },
-    });
+    await recordAuditLog(
+      {
+        action: 'order.created',
+        entityType: 'Order',
+        entityId: order.id,
+        ipAddress: actor.ipAddress,
+        metadata: { eventId: input.eventId, ticketTypeId: input.ticketTypeId, quantity: input.quantity },
+      },
+      tx,
+    );
 
     return order;
   });

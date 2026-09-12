@@ -92,7 +92,7 @@ describe('processCheckoutCompleted', () => {
       tx,
       expect.objectContaining({ type: 'PAYMENT_RECEIPT', toEmail: 'buyer@example.com' }),
     );
-    expect(auditLogMock).toHaveBeenCalledWith(expect.objectContaining({ action: 'order.paid' }));
+    expect(auditLogMock).toHaveBeenCalledWith(expect.objectContaining({ action: 'order.paid' }), tx);
   });
 
   it('throws OrderNotFoundError when the order referenced by the event does not exist', async () => {

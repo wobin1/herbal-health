@@ -9,7 +9,7 @@ import {
   EventNotOnSaleError,
 } from '@/server/services/order-service';
 import { InsufficientInventoryError } from '@/server/services/inventory-service';
-import { getPaymentProvider } from '@/lib/payments/stripe';
+import { getPaymentProvider } from '@/lib/payments/provider';
 
 const MAX_BODY_BYTES = 32 * 1024;
 const RATE_LIMIT = 10;

@@ -31,95 +31,104 @@ export async function processCheckoutCompleted(
   event: Extract<PaymentWebhookEvent, { type: 'checkout.session.completed' }>,
 ): Promise<ProcessWebhookResult> {
   try {
-    await prisma.$transaction(async (tx) => {
-      // Unique constraint on providerEventId makes this the idempotency gate.
-      await tx.payment.create({
-        data: {
-          orderId: event.orderId,
-          provider: 'stripe',
-          providerPaymentId: event.paymentIntentId,
-          providerEventId: event.providerEventId,
-          status: 'SUCCEEDED',
-          amountMinorUnits: event.amountMinorUnits,
-          currency: event.currency,
-          rawPayload: event.raw as never,
-        },
-      });
+    await prisma.$transaction(
+      async (tx) => {
+        // Unique constraint on providerEventId makes this the idempotency gate.
+        await tx.payment.create({
+          data: {
+            orderId: event.orderId,
+            provider: 'stripe',
+            providerPaymentId: event.paymentIntentId,
+            providerEventId: event.providerEventId,
+            status: 'SUCCEEDED',
+            amountMinorUnits: event.amountMinorUnits,
+            currency: event.currency,
+            rawPayload: event.raw as never,
+          },
+        });
 
-      const order = await tx.order.findUnique({
-        where: { id: event.orderId },
-        include: { items: { include: { attendees: true } }, event: true },
-      });
-      if (!order) {
-        throw new OrderNotFoundError(`Order ${event.orderId} not found`);
-      }
+        const order = await tx.order.findUnique({
+          where: { id: event.orderId },
+          include: { items: { include: { attendees: true } }, event: true },
+        });
+        if (!order) {
+          throw new OrderNotFoundError(`Order ${event.orderId} not found`);
+        }
 
-      // Order already paid (e.g. reconciled by another path) — do not
-      // re-mint registrations or double-convert inventory.
-      if (order.status === 'PAID') {
-        return;
-      }
+        // Order already paid (e.g. reconciled by another path) — do not
+        // re-mint registrations or double-convert inventory.
+        if (order.status === 'PAID') {
+          return;
+        }
 
-      await tx.order.update({ where: { id: order.id }, data: { status: 'PAID' } });
+        await tx.order.update({ where: { id: order.id }, data: { status: 'PAID' } });
 
-      const eventVariables = {
-        eventTitle: order.event.title,
-        eventStartAt: order.event.startAt.toISOString(),
-        eventLocation: `${order.event.city}, ${order.event.state}`,
-      };
+        const eventVariables = {
+          eventTitle: order.event.title,
+          eventStartAt: order.event.startAt.toISOString(),
+          eventLocation: `${order.event.city}, ${order.event.state}`,
+        };
 
-      for (const item of order.items) {
-        await convertReservationToSale(tx, item.eventTicketTypeId, item.quantity);
-        for (const attendee of item.attendees) {
-          const registration = await createRegistrationWithUniqueReference(tx, {
-            orderId: order.id,
-            orderItemId: item.id,
-            attendeeId: attendee.id,
-            eventId: order.eventId,
-          });
-          await enqueueEmail(tx, {
-            type: 'REGISTRATION_CONFIRMATION',
-            toEmail: attendee.email,
-            dedupeKey: `registration-confirmation:${registration.id}`,
-            variables: {
-              attendeeFirstName: attendee.firstName,
-              registrationReference: registration.reference,
-              ...eventVariables,
-            },
-          });
-          if (process.env.ADMIN_NOTIFICATION_EMAIL) {
+        for (const item of order.items) {
+          await convertReservationToSale(tx, item.eventTicketTypeId, item.quantity);
+          for (const attendee of item.attendees) {
+            const registration = await createRegistrationWithUniqueReference(tx, {
+              orderId: order.id,
+              orderItemId: item.id,
+              attendeeId: attendee.id,
+              eventId: order.eventId,
+            });
             await enqueueEmail(tx, {
-              type: 'ADMIN_NEW_REGISTRATION',
-              toEmail: process.env.ADMIN_NOTIFICATION_EMAIL,
-              dedupeKey: `admin-new-registration:${registration.id}`,
+              type: 'REGISTRATION_CONFIRMATION',
+              toEmail: attendee.email,
+              dedupeKey: `registration-confirmation:${registration.id}`,
               variables: {
                 attendeeFirstName: attendee.firstName,
                 registrationReference: registration.reference,
                 ...eventVariables,
               },
             });
+            if (process.env.ADMIN_NOTIFICATION_EMAIL) {
+              await enqueueEmail(tx, {
+                type: 'ADMIN_NEW_REGISTRATION',
+                toEmail: process.env.ADMIN_NOTIFICATION_EMAIL,
+                dedupeKey: `admin-new-registration:${registration.id}`,
+                variables: {
+                  attendeeFirstName: attendee.firstName,
+                  registrationReference: registration.reference,
+                  ...eventVariables,
+                },
+              });
+            }
           }
         }
-      }
 
-      await enqueueEmail(tx, {
-        type: 'PAYMENT_RECEIPT',
-        toEmail: order.buyerEmail,
-        dedupeKey: `payment-receipt:${order.id}`,
-        variables: {
-          attendeeFirstName: order.buyerName,
-          orderTotal: formatMoney(order.totalMinorUnits, order.currency),
-          ...eventVariables,
-        },
-      });
+        await enqueueEmail(tx, {
+          type: 'PAYMENT_RECEIPT',
+          toEmail: order.buyerEmail,
+          dedupeKey: `payment-receipt:${order.id}`,
+          variables: {
+            attendeeFirstName: order.buyerName,
+            orderTotal: formatMoney(order.totalMinorUnits, order.currency),
+            ...eventVariables,
+          },
+        });
 
-      await recordAuditLog({
-        action: 'order.paid',
-        entityType: 'Order',
-        entityId: order.id,
-        metadata: { providerEventId: event.providerEventId },
-      });
-    });
+        await recordAuditLog(
+          {
+            action: 'order.paid',
+            entityType: 'Order',
+            entityId: order.id,
+            metadata: { providerEventId: event.providerEventId },
+          },
+          tx,
+        );
+      },
+      // Default interactive-transaction timeout (5s) is too tight for this
+      // many sequential writes (payment, order, per-attendee registration +
+      // email-outbox rows, audit log) once real DB latency is in play.
+      { maxWait: 10_000, timeout: 20_000 },
+    );
     return { duplicate: false };
   } catch (error) {
     const code = (error as { code?: string; meta?: { target?: string[] } } | null)?.code;

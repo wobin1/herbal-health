@@ -144,7 +144,7 @@ describe('createPendingOrder', () => {
         }),
       }),
     );
-    expect(auditLogMock).toHaveBeenCalledWith(expect.objectContaining({ action: 'order.created' }));
+    expect(auditLogMock).toHaveBeenCalledWith(expect.objectContaining({ action: 'order.created' }), tx);
   });
 });
 

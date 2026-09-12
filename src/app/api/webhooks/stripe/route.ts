@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { errorResponse } from '@/lib/http/errors';
-import { getPaymentProvider } from '@/lib/payments/stripe';
+import { getPaymentProvider } from '@/lib/payments/provider';
+import { MOCK_SIGNATURE_HEADER } from '@/lib/payments/mock';
 import { InvalidWebhookSignatureError } from '@/lib/payments/types';
 import { processCheckoutCompleted, processCheckoutExpired } from '@/server/services/payment-webhook-service';
 
@@ -17,7 +18,7 @@ export async function POST(request: NextRequest) {
     return errorResponse(413, 'PAYLOAD_TOO_LARGE', 'Webhook body too large');
   }
 
-  const signature = request.headers.get('stripe-signature');
+  const signature = request.headers.get('stripe-signature') ?? request.headers.get(MOCK_SIGNATURE_HEADER);
 
   let event;
   try {

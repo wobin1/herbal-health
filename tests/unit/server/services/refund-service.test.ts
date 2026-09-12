@@ -17,7 +17,7 @@ const enqueueEmailMock = vi.fn();
 vi.mock('@/server/services/email-queue-service', () => ({ enqueueEmail: enqueueEmailMock }));
 
 const refundPaymentMock = vi.fn();
-vi.mock('@/lib/payments/stripe', () => ({ getPaymentProvider: () => ({ refundPayment: refundPaymentMock }) }));
+vi.mock('@/lib/payments/provider', () => ({ getPaymentProvider: () => ({ refundPayment: refundPaymentMock }) }));
 
 const {
   refundOrder,

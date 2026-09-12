@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/db/client';
 import { recordAuditLog } from '@/server/services/audit-log-service';
 import { releaseSoldCapacity } from '@/server/services/inventory-service';
-import { getPaymentProvider } from '@/lib/payments/stripe';
+import { getPaymentProvider } from '@/lib/payments/provider';
 import { enqueueEmail } from '@/server/services/email-queue-service';
 
 export class OrderNotFoundError extends Error {}
