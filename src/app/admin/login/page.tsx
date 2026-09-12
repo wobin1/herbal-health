@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 type Stage =
@@ -70,123 +72,169 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-6 py-10">
-      <h1 className="mb-6 text-xl font-semibold">Herbal Health Admin</h1>
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-neutral-950 px-4 py-10">
+      <Image
+        src="/images/hero-mortar-pestle.png"
+        alt=""
+        fill
+        priority
+        className="object-cover"
+      />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/50" />
 
-      {error && (
-        <p role="alert" className="mb-4 rounded border border-red-400 bg-red-50 px-3 py-2 text-sm text-red-800">
-          {error}
+      <header className="absolute inset-x-0 top-0 flex items-center justify-between px-6 py-6 sm:px-10">
+        <Link
+          href="/"
+          className="flex items-center gap-2 text-sm font-medium text-white/90 hover:text-white"
+        >
+          <span aria-hidden="true">&larr;</span> Back
+        </Link>
+        <span className="flex items-center gap-2 font-serif text-lg text-white">
+          <Image
+            src="/herbal-logo.jpeg"
+            alt=""
+            width={28}
+            height={28}
+            className="h-7 w-7 rounded-full object-cover"
+          />
+          Herbal Health
+        </span>
+        <Link
+          href="/contact"
+          className="text-sm font-medium text-white/90 hover:text-white"
+        >
+          Contact support
+        </Link>
+      </header>
+
+      <div className="relative w-full max-w-sm rounded-2xl bg-white p-8 shadow-xl">
+        <h1 className="font-serif text-2xl text-primary-950">
+          {stage.step === 'credentials' ? 'Log in to Herbal Health' : 'Verify your identity'}
+        </h1>
+        <p className="mt-1 text-sm text-neutral-600">
+          {stage.step === 'credentials'
+            ? 'Admin access to the seminar series dashboard'
+            : 'Enter the code from your authenticator app'}
         </p>
-      )}
 
-      {stage.step === 'credentials' && (
-        <form onSubmit={handleCredentialsSubmit} className="flex flex-col gap-4" noValidate>
-          <div className="flex flex-col gap-1">
-            <label htmlFor="email" className="text-sm font-medium">
-              Email
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="username"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="rounded border border-neutral-300 px-3 py-2"
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label htmlFor="password" className="text-sm font-medium">
-              Password
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="rounded border border-neutral-300 px-3 py-2"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={submitting}
-            className="bg-primary-950 rounded px-4 py-2 font-medium text-neutral-50 disabled:opacity-60"
+        {error && (
+          <p
+            role="alert"
+            className="mt-6 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800"
           >
-            {submitting ? 'Signing in…' : 'Sign in'}
-          </button>
-        </form>
-      )}
-
-      {stage.step === 'mfa_setup' && (
-        <form onSubmit={handleMfaSubmit} className="flex flex-col gap-4" noValidate>
-          <p className="text-sm text-neutral-700">
-            Scan this into an authenticator app, then enter the 6-digit code to finish setting up
-            multi-factor authentication.
+            {error}
           </p>
-          <p className="break-all rounded border border-neutral-300 bg-neutral-100 px-3 py-2 text-xs">
-            {stage.provisioningUri}
-          </p>
-          <div className="flex flex-col gap-1">
-            <label htmlFor="code" className="text-sm font-medium">
-              6-digit code
-            </label>
-            <input
-              id="code"
-              name="code"
-              type="text"
-              inputMode="numeric"
-              pattern="\d{6}"
-              maxLength={6}
-              autoComplete="one-time-code"
-              required
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              className="rounded border border-neutral-300 px-3 py-2"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={submitting}
-            className="bg-primary-950 rounded px-4 py-2 font-medium text-neutral-50 disabled:opacity-60"
-          >
-            {submitting ? 'Verifying…' : 'Verify and finish setup'}
-          </button>
-        </form>
-      )}
+        )}
 
-      {stage.step === 'mfa_required' && (
-        <form onSubmit={handleMfaSubmit} className="flex flex-col gap-4" noValidate>
-          <div className="flex flex-col gap-1">
-            <label htmlFor="code" className="text-sm font-medium">
-              6-digit authentication code
-            </label>
-            <input
-              id="code"
-              name="code"
-              type="text"
-              inputMode="numeric"
-              pattern="\d{6}"
-              maxLength={6}
-              autoComplete="one-time-code"
-              required
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              className="rounded border border-neutral-300 px-3 py-2"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={submitting}
-            className="bg-primary-950 rounded px-4 py-2 font-medium text-neutral-50 disabled:opacity-60"
-          >
-            {submitting ? 'Verifying…' : 'Verify'}
-          </button>
-        </form>
-      )}
+        {stage.step === 'credentials' && (
+          <form onSubmit={handleCredentialsSubmit} className="mt-6 flex flex-col gap-4" noValidate>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="email" className="text-sm font-medium text-neutral-800">
+                Email address
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="username"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="rounded-lg border border-neutral-300 px-3 py-2.5 text-sm focus:border-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-600/30"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="password" className="text-sm font-medium text-neutral-800">
+                Password
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="rounded-lg border border-neutral-300 px-3 py-2.5 text-sm focus:border-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-600/30"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="mt-2 rounded-lg bg-primary-950 px-4 py-2.5 text-sm font-medium text-neutral-50 transition hover:bg-primary-900 disabled:opacity-60"
+            >
+              {submitting ? 'Signing in…' : 'Sign in'}
+            </button>
+          </form>
+        )}
+
+        {stage.step === 'mfa_setup' && (
+          <form onSubmit={handleMfaSubmit} className="mt-6 flex flex-col gap-4" noValidate>
+            <p className="text-sm text-neutral-700">
+              Scan this into an authenticator app, then enter the 6-digit code to finish setting up
+              multi-factor authentication.
+            </p>
+            <p className="break-all rounded-lg border border-neutral-300 bg-neutral-100 px-3 py-2 text-xs">
+              {stage.provisioningUri}
+            </p>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="code" className="text-sm font-medium text-neutral-800">
+                6-digit code
+              </label>
+              <input
+                id="code"
+                name="code"
+                type="text"
+                inputMode="numeric"
+                pattern="\d{6}"
+                maxLength={6}
+                autoComplete="one-time-code"
+                required
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                className="rounded-lg border border-neutral-300 px-3 py-2.5 text-sm focus:border-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-600/30"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="mt-2 rounded-lg bg-primary-950 px-4 py-2.5 text-sm font-medium text-neutral-50 transition hover:bg-primary-900 disabled:opacity-60"
+            >
+              {submitting ? 'Verifying…' : 'Verify and finish setup'}
+            </button>
+          </form>
+        )}
+
+        {stage.step === 'mfa_required' && (
+          <form onSubmit={handleMfaSubmit} className="mt-6 flex flex-col gap-4" noValidate>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="code" className="text-sm font-medium text-neutral-800">
+                6-digit authentication code
+              </label>
+              <input
+                id="code"
+                name="code"
+                type="text"
+                inputMode="numeric"
+                pattern="\d{6}"
+                maxLength={6}
+                autoComplete="one-time-code"
+                required
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                className="rounded-lg border border-neutral-300 px-3 py-2.5 text-sm focus:border-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-600/30"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="mt-2 rounded-lg bg-primary-950 px-4 py-2.5 text-sm font-medium text-neutral-50 transition hover:bg-primary-900 disabled:opacity-60"
+            >
+              {submitting ? 'Verifying…' : 'Verify'}
+            </button>
+          </form>
+        )}
+      </div>
     </div>
   );
 }

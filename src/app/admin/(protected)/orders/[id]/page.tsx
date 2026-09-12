@@ -9,6 +9,19 @@ import {
   RefundOrderButton,
   ResendConfirmationButton,
 } from '@/app/admin/(protected)/orders/order-actions';
+import {
+  BackLink,
+  StatusBadge,
+  tableClassName,
+  tableShellClassName,
+  tdClassName,
+  tdNumClassName,
+  tdPrimaryClassName,
+  theadClassName,
+  thClassName,
+  thNumClassName,
+  trClassName,
+} from '@/components/admin/ui';
 
 const DATE_FORMATTER = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' });
 
@@ -33,25 +46,28 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
 
   return (
     <div>
+      <BackLink href="/admin/orders" label="Back to Orders" />
       <h1 className="text-2xl font-semibold text-neutral-900">Order {order.id}</h1>
-      <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2 text-sm md:grid-cols-4">
+      <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 text-sm md:grid-cols-4">
         <div>
-          <dt className="text-neutral-500">Event</dt>
-          <dd className="text-neutral-900">{order.event.title}</dd>
+          <dt className="text-xs uppercase tracking-wide text-neutral-500">Event</dt>
+          <dd className="mt-1 text-neutral-900">{order.event.title}</dd>
         </div>
         <div>
-          <dt className="text-neutral-500">Buyer</dt>
-          <dd className="text-neutral-900">
+          <dt className="text-xs uppercase tracking-wide text-neutral-500">Buyer</dt>
+          <dd className="mt-1 text-neutral-900">
             {order.buyerName} ({order.buyerEmail})
           </dd>
         </div>
         <div>
-          <dt className="text-neutral-500">Status</dt>
-          <dd className="text-neutral-900">{order.status}</dd>
+          <dt className="text-xs uppercase tracking-wide text-neutral-500">Status</dt>
+          <dd className="mt-1">
+            <StatusBadge status={order.status} />
+          </dd>
         </div>
         <div>
-          <dt className="text-neutral-500">Total</dt>
-          <dd className="text-neutral-900">{formatMoney(order.totalMinorUnits, order.currency)}</dd>
+          <dt className="text-xs uppercase tracking-wide text-neutral-500">Total</dt>
+          <dd className="mt-1 tabular-nums text-neutral-900">{formatMoney(order.totalMinorUnits, order.currency)}</dd>
         </div>
       </dl>
 
@@ -62,36 +78,40 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
       ) : null}
 
       <h2 className="mt-10 text-lg font-semibold text-neutral-900">Payments</h2>
-      <table className="mt-4 w-full max-w-2xl border-collapse text-left text-sm">
-        <thead>
-          <tr className="border-b border-neutral-200 text-neutral-500">
-            <th scope="col" className="py-2 pr-4">Provider Payment</th>
-            <th scope="col" className="py-2 pr-4">Status</th>
-            <th scope="col" className="py-2 pr-4">Amount</th>
-          </tr>
-        </thead>
-        <tbody>
-          {order.payments.map((payment) => (
-            <tr key={payment.id} className="border-b border-neutral-100">
-              <td className="py-2 pr-4 font-mono text-xs text-neutral-600">{payment.providerPaymentId ?? '—'}</td>
-              <td className="py-2 pr-4 text-neutral-600">{payment.status}</td>
-              <td className="py-2 pr-4 text-neutral-600">{formatMoney(payment.amountMinorUnits, payment.currency)}</td>
+      <div className={`${tableShellClassName} mt-4 max-w-2xl`}>
+        <table className={tableClassName}>
+          <thead className={theadClassName}>
+            <tr className="border-b border-neutral-200">
+              <th scope="col" className={thClassName}>Provider Payment</th>
+              <th scope="col" className={thClassName}>Status</th>
+              <th scope="col" className={thNumClassName}>Amount</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {order.payments.map((payment) => (
+              <tr key={payment.id} className={trClassName}>
+                <td className={`${tdClassName} font-mono text-xs`}>{payment.providerPaymentId ?? '—'}</td>
+                <td className={tdClassName}>
+                  <StatusBadge status={payment.status} />
+                </td>
+                <td className={tdNumClassName}>{formatMoney(payment.amountMinorUnits, payment.currency)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       <h2 className="mt-10 text-lg font-semibold text-neutral-900">Attendees</h2>
-      <div className="mt-4 overflow-x-auto">
-        <table className="w-full min-w-[900px] border-collapse text-left text-sm">
-          <thead>
-            <tr className="border-b border-neutral-200 text-neutral-500">
-              <th scope="col" className="py-2 pr-4">Name</th>
-              <th scope="col" className="py-2 pr-4">Email</th>
-              <th scope="col" className="py-2 pr-4">Registration</th>
-              <th scope="col" className="py-2 pr-4">Attended</th>
-              <th scope="col" className="py-2 pr-4">Notes</th>
-              <th scope="col" className="py-2 pr-4">Actions</th>
+      <div className={`${tableShellClassName} mt-4 overflow-x-auto`}>
+        <table className={`${tableClassName} min-w-[900px]`}>
+          <thead className={theadClassName}>
+            <tr className="border-b border-neutral-200">
+              <th scope="col" className={thClassName}>Name</th>
+              <th scope="col" className={thClassName}>Email</th>
+              <th scope="col" className={thClassName}>Registration</th>
+              <th scope="col" className={thClassName}>Attended</th>
+              <th scope="col" className={thClassName}>Notes</th>
+              <th scope="col" className={thClassName}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -99,21 +119,21 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
               item.attendees.map((attendee) => {
                 const registration = registrationsByAttendeeId.get(attendee.id);
                 return (
-                  <tr key={attendee.id} className="border-b border-neutral-100 align-top">
-                    <td className="py-3 pr-4 text-neutral-900">
+                  <tr key={attendee.id} className={`${trClassName} align-top`}>
+                    <td className={tdPrimaryClassName}>
                       {attendee.firstName} {attendee.lastName}
                     </td>
-                    <td className="py-3 pr-4 text-neutral-600">{attendee.email}</td>
-                    <td className="py-3 pr-4 text-neutral-600">
+                    <td className={tdClassName}>{attendee.email}</td>
+                    <td className={tdClassName}>
                       {registration ? `${registration.reference} (${registration.status})` : '—'}
                     </td>
-                    <td className="py-3 pr-4 text-neutral-600">
+                    <td className={tdClassName}>
                       {attendee.attendedAt ? DATE_FORMATTER.format(attendee.attendedAt) : '—'}
                     </td>
-                    <td className="py-3 pr-4">
+                    <td className={tdClassName}>
                       <AttendeeNoteForm attendeeId={attendee.id} initialNote={attendee.internalNotes ?? ''} />
                     </td>
-                    <td className="py-3 pr-4">
+                    <td className={tdClassName}>
                       <div className="flex flex-col items-start gap-2">
                         {registration ? (
                           <>

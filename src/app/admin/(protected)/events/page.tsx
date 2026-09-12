@@ -1,6 +1,24 @@
 import Link from 'next/link';
 import { requirePermission } from '@/lib/auth/require-admin';
 import { listAdminEvents } from '@/server/services/event-service';
+import { parsePageParams } from '@/lib/pagination';
+import { PaginationControls } from '@/components/admin/pagination-controls';
+import { CalendarIcon } from '@/components/admin/icons';
+import { EventDeleteButton } from '@/components/admin/event-delete-button';
+import {
+  EmptyState,
+  StatusBadge,
+  rowActionsClassName,
+  tableClassName,
+  tableShellClassName,
+  tdClassName,
+  tdNumClassName,
+  tdPrimaryClassName,
+  theadClassName,
+  thClassName,
+  thNumClassName,
+  trClassName,
+} from '@/components/admin/ui';
 
 const DATE_FORMATTER = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeZone: 'UTC' });
 
@@ -12,61 +30,98 @@ function formatStartingPrice(ticketTypes: Array<{ priceMinorUnits: number; curre
   );
 }
 
-export default async function AdminEventsPage() {
+export default async function AdminEventsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
   await requirePermission('events:edit');
-  const events = await listAdminEvents();
+  const params = await searchParams;
+  const pageParams = parsePageParams(params);
+  const { items: events, page, totalPages, total } = await listAdminEvents({}, pageParams);
 
   return (
     <div>
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-neutral-900">Events</h1>
+        <div>
+          <h1 className="text-2xl font-semibold text-neutral-900">Events</h1>
+          <p className="mt-1 text-sm text-neutral-500">{total} total</p>
+        </div>
         <Link
           href="/admin/events/new"
-          className="rounded-full bg-primary-950 px-5 py-2 text-sm font-medium text-neutral-50"
+          className="rounded-full bg-primary-950 px-5 py-2 text-sm font-medium text-neutral-50 transition-colors hover:bg-primary-900"
         >
           New Event
         </Link>
       </div>
 
-      <div className="mt-8 overflow-x-auto">
-        <table className="w-full min-w-[800px] border-collapse text-left text-sm">
-          <thead>
-            <tr className="border-b border-neutral-200 text-neutral-500">
-              <th scope="col" className="py-2 pr-4">Event</th>
-              <th scope="col" className="py-2 pr-4">Location</th>
-              <th scope="col" className="py-2 pr-4">Date</th>
-              <th scope="col" className="py-2 pr-4">Status</th>
-              <th scope="col" className="py-2 pr-4">Tickets Sold</th>
-              <th scope="col" className="py-2 pr-4">Capacity</th>
-              <th scope="col" className="py-2 pr-4">Starting Price</th>
-              <th scope="col" className="py-2 pr-4">Revenue</th>
-              <th scope="col" className="py-2 pr-4">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {events.map((event) => {
-              const capacity = event.ticketTypes.reduce((sum, t) => sum + t.capacity, 0);
-              return (
-                <tr key={event.id} className="border-b border-neutral-100">
-                  <td className="py-3 pr-4 font-medium text-neutral-900">{event.title}</td>
-                  <td className="py-3 pr-4 text-neutral-600">{event.location?.name ?? `${event.city}, ${event.state}`}</td>
-                  <td className="py-3 pr-4 text-neutral-600">{DATE_FORMATTER.format(event.startAt)}</td>
-                  <td className="py-3 pr-4 text-neutral-600">{event.status}</td>
-                  <td className="py-3 pr-4 text-neutral-600">0</td>
-                  <td className="py-3 pr-4 text-neutral-600">{capacity}</td>
-                  <td className="py-3 pr-4 text-neutral-600">{formatStartingPrice(event.ticketTypes)}</td>
-                  <td className="py-3 pr-4 text-neutral-600">$0.00</td>
-                  <td className="py-3 pr-4">
-                    <Link href={`/admin/events/${event.id}`} className="text-primary-950 underline">
-                      Edit
-                    </Link>
-                  </td>
+      <div className="mt-8">
+        {events.length === 0 ? (
+          <EmptyState
+            icon={<CalendarIcon className="h-8 w-8" />}
+            title="No events yet"
+            description="Create your first event to start selling tickets."
+            action={
+              <Link
+                href="/admin/events/new"
+                className="rounded-full bg-primary-950 px-5 py-2 text-sm font-medium text-neutral-50 transition-colors hover:bg-primary-900"
+              >
+                New Event
+              </Link>
+            }
+          />
+        ) : (
+          <div className={`${tableShellClassName} overflow-x-auto`}>
+            <table className={`${tableClassName} min-w-[800px]`}>
+              <thead className={theadClassName}>
+                <tr className="border-b border-neutral-200">
+                  <th scope="col" className={thClassName}>Event</th>
+                  <th scope="col" className={thClassName}>Location</th>
+                  <th scope="col" className={thClassName}>Date</th>
+                  <th scope="col" className={thClassName}>Status</th>
+                  <th scope="col" className={thNumClassName}>Tickets Sold</th>
+                  <th scope="col" className={thNumClassName}>Capacity</th>
+                  <th scope="col" className={thNumClassName}>Starting Price</th>
+                  <th scope="col" className={thNumClassName}>Revenue</th>
+                  <th scope="col" className={thClassName}>
+                    <span className="sr-only">Actions</span>
+                  </th>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
-        {events.length === 0 ? <p className="mt-6 text-neutral-600">No events yet.</p> : null}
+              </thead>
+              <tbody>
+                {events.map((event) => {
+                  const capacity = event.ticketTypes.reduce((sum, t) => sum + t.capacity, 0);
+                  return (
+                    <tr key={event.id} className={trClassName}>
+                      <td className={tdPrimaryClassName}>{event.title}</td>
+                      <td className={tdClassName}>{event.location?.name ?? `${event.city}, ${event.state}`}</td>
+                      <td className={tdClassName}>{DATE_FORMATTER.format(event.startAt)}</td>
+                      <td className={tdClassName}>
+                        <StatusBadge status={event.status} />
+                      </td>
+                      <td className={tdNumClassName}>0</td>
+                      <td className={tdNumClassName}>{capacity}</td>
+                      <td className={tdNumClassName}>{formatStartingPrice(event.ticketTypes)}</td>
+                      <td className={tdNumClassName}>$0.00</td>
+                      <td className={tdClassName}>
+                        <div className={rowActionsClassName}>
+                          <Link
+                            href={`/admin/events/${event.id}`}
+                            className="font-medium text-primary-950 underline-offset-2 hover:underline"
+                          >
+                            Edit
+                          </Link>
+                          {event.status === 'DRAFT' ? <EventDeleteButton eventId={event.id} /> : null}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+        <PaginationControls page={page} totalPages={totalPages} total={total} basePath="/admin/events" />
       </div>
     </div>
   );

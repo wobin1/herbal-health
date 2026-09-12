@@ -116,6 +116,30 @@ export function ShoppingCartIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+export function LockIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}>
+      <rect
+        x="5.5"
+        y="10.5"
+        width="13"
+        height="9"
+        rx="1.6"
+        stroke="currentColor"
+        strokeWidth="1.6"
+      />
+      <path
+        d="M8 10.5V7.5a4 4 0 0 1 8 0v3"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx="12" cy="15" r="1.4" fill="currentColor" />
+    </svg>
+  );
+}
+
 export function StarIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" {...props}>

@@ -3,13 +3,13 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ShoppingCartIcon, UserIcon } from '@/components/icons';
+import { LockIcon, UserIcon } from '@/components/icons';
 
 const NAV_LINKS = [
   { href: '/', label: 'Home' },
+  { href: '/events', label: 'Events' },
   { href: '/about', label: 'About' },
   { href: '/faq', label: 'FAQ' },
-  { href: '/contact', label: 'Contact' },
 ];
 
 export function SiteHeader() {
@@ -53,18 +53,18 @@ export function SiteHeader() {
 
         <div className="flex items-center gap-2">
           <Link
-            href="/"
+            href="/contact"
             className="inline-flex items-center gap-2 rounded-full border border-neutral-50/20 px-5 py-2 text-sm font-medium hover:border-neutral-50/40"
           >
             <UserIcon className="h-4 w-4" />
-            My Account
+            Contact Us
           </Link>
           <Link
-            href="/"
-            aria-label="Shopping cart"
+            href="/admin/login"
+            aria-label="Admin login"
             className="flex h-10 w-10 items-center justify-center rounded-full border border-neutral-50/20 text-neutral-50 hover:border-neutral-50/40"
           >
-            <ShoppingCartIcon className="h-4 w-4" />
+            <LockIcon className="h-4 w-4" />
           </Link>
         </div>
       </div>

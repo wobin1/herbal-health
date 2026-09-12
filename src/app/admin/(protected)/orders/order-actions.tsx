@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { useConfirm } from '@/components/confirm-dialog';
 
 async function postJson(url: string, body?: unknown): Promise<void> {
   const response = await fetch(url, {
@@ -27,11 +28,12 @@ function ActionButton({
   className?: string;
 }) {
   const router = useRouter();
+  const { confirm, dialog } = useConfirm();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleClick() {
-    if (confirmMessage && !window.confirm(confirmMessage)) return;
+    if (confirmMessage && !(await confirm(confirmMessage))) return;
     setPending(true);
     setError(null);
     try {
@@ -50,6 +52,7 @@ function ActionButton({
         {pending ? '…' : label}
       </button>
       {error ? <span className="ml-2 text-xs text-red-700">{error}</span> : null}
+      {dialog}
     </span>
   );
 }

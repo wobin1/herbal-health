@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db/client';
 import { recordAuditLog } from '@/server/services/audit-log-service';
 import { reserveTicketCapacity, withSerializableTransaction } from '@/server/services/inventory-service';
 import type { CheckoutRequestInput } from '@/lib/validation/checkout';
+import { buildPageResult, toSkipTake, type PageParams } from '@/lib/pagination';
 
 export class TicketTypeNotFoundError extends Error {}
 export class EventNotOnSaleError extends Error {}
@@ -111,17 +112,24 @@ export interface OrderListFilters {
   eventId?: string;
 }
 
-export async function listOrders(filters: OrderListFilters) {
+export async function listOrders(filters: OrderListFilters, pageParams: PageParams) {
   const where: Prisma.OrderWhereInput = {};
   if (filters.status) where.status = filters.status;
   if (filters.buyerEmail) where.buyerEmail = { equals: filters.buyerEmail, mode: 'insensitive' };
   if (filters.eventId) where.eventId = filters.eventId;
 
-  return prisma.order.findMany({
-    where,
-    include: { event: true, items: true, payments: true },
-    orderBy: { createdAt: 'desc' },
-  });
+  const { skip, take } = toSkipTake(pageParams);
+  const [orders, total] = await Promise.all([
+    prisma.order.findMany({
+      where,
+      include: { event: true, items: true, payments: true },
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take,
+    }),
+    prisma.order.count({ where }),
+  ]);
+  return buildPageResult(orders, total, pageParams);
 }
 
 export async function getOrderDetail(orderId: string) {

@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db/client';
 import { recordAuditLog } from '@/server/services/audit-log-service';
 import { enqueueEmail } from '@/server/services/email-queue-service';
 import { randomUUID } from 'node:crypto';
+import { buildPageResult, toSkipTake, type PageParams } from '@/lib/pagination';
 
 /** Fields that, if changed, warrant notifying already-registered attendees. */
 const NOTIFY_ON_CHANGE_FIELDS: Array<keyof Event> = ['startAt', 'endAt', 'locationId', 'city', 'state'];
@@ -124,7 +125,7 @@ export interface AdminEventFilters {
   keyword?: string;
 }
 
-export async function listAdminEvents(filters: AdminEventFilters = {}) {
+export async function listAdminEvents(filters: AdminEventFilters = {}, pageParams: PageParams) {
   const where: Prisma.EventWhereInput = {};
   if (filters.status) where.status = filters.status;
   if (filters.keyword) {
@@ -133,11 +134,18 @@ export async function listAdminEvents(filters: AdminEventFilters = {}) {
       { slug: { contains: filters.keyword, mode: 'insensitive' } },
     ];
   }
-  return prisma.event.findMany({
-    where,
-    include: { location: true, ticketTypes: true },
-    orderBy: [{ startAt: 'desc' }],
-  });
+  const { skip, take } = toSkipTake(pageParams);
+  const [events, total] = await Promise.all([
+    prisma.event.findMany({
+      where,
+      include: { location: true, ticketTypes: true },
+      orderBy: [{ startAt: 'desc' }],
+      skip,
+      take,
+    }),
+    prisma.event.count({ where }),
+  ]);
+  return buildPageResult(events, total, pageParams);
 }
 
 export async function getAdminEventById(id: string) {

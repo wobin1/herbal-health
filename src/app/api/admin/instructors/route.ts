@@ -3,12 +3,14 @@ import { requirePermission, UnauthorizedError, ForbiddenError } from '@/lib/auth
 import { errorResponse } from '@/lib/http/errors';
 import { instructorSchema } from '@/lib/validation/instructor';
 import { createInstructor, listInstructors } from '@/server/services/instructor-service';
+import { parsePageParams } from '@/lib/pagination';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     await requirePermission('instructors:manage');
-    const instructors = await listInstructors();
-    return NextResponse.json({ instructors });
+    const pageParams = parsePageParams(request.nextUrl.searchParams);
+    const result = await listInstructors(pageParams);
+    return NextResponse.json({ instructors: result.items, page: result.page, pageSize: result.pageSize, total: result.total, totalPages: result.totalPages });
   } catch (error) {
     if (error instanceof UnauthorizedError) return errorResponse(401, 'UNAUTHENTICATED', 'Not signed in');
     if (error instanceof ForbiddenError) return errorResponse(403, 'FORBIDDEN', 'Insufficient permissions');

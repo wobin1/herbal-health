@@ -2,6 +2,18 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import {
+  rowActionsClassName,
+  tableClassName,
+  tableShellClassName,
+  tdClassName,
+  tdNumClassName,
+  tdPrimaryClassName,
+  theadClassName,
+  thClassName,
+  thNumClassName,
+  trClassName,
+} from '@/components/admin/ui';
 
 export interface TicketTypeRow {
   id: string;
@@ -94,47 +106,56 @@ export function TicketTypeManager({ eventId, ticketTypes }: { eventId: string; t
 
   return (
     <div>
-      <table className="w-full min-w-[500px] border-collapse text-left text-sm">
-        <thead>
-          <tr className="border-b border-neutral-200 text-neutral-500">
-            <th scope="col" className="py-2 pr-4">Name</th>
-            <th scope="col" className="py-2 pr-4">Price</th>
-            <th scope="col" className="py-2 pr-4">Capacity</th>
-            <th scope="col" className="py-2 pr-4">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {ticketTypes.map((ticketType) => (
-            <tr key={ticketType.id} className="border-b border-neutral-100">
-              <td className="py-3 pr-4 font-medium text-neutral-900">{ticketType.name}</td>
-              <td className="py-3 pr-4 text-neutral-600">
-                {formatPrice(ticketType.priceMinorUnits, ticketType.currency)}
-              </td>
-              <td className="py-3 pr-4 text-neutral-600">{ticketType.capacity}</td>
-              <td className="py-3 pr-4">
-                <button
-                  type="button"
-                  onClick={() => startEdit(ticketType)}
-                  className="mr-3 text-sm font-medium text-primary-950 underline"
-                >
-                  Edit
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleDelete(ticketType.id)}
-                  disabled={submitting}
-                  className="text-sm font-medium text-red-700 underline disabled:opacity-50"
-                >
-                  Delete
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {ticketTypes.length === 0 ? <p className="mt-4 text-neutral-600">No ticket types yet.</p> : null}
+      {ticketTypes.length === 0 ? (
+        <p className="rounded-xl border border-dashed border-neutral-300 bg-neutral-50/60 px-4 py-6 text-center text-sm text-neutral-500">
+          No ticket types yet.
+        </p>
+      ) : (
+        <div className={`${tableShellClassName} overflow-x-auto`}>
+          <table className={`${tableClassName} min-w-[500px]`}>
+            <thead className={theadClassName}>
+              <tr className="border-b border-neutral-200">
+                <th scope="col" className={thClassName}>Name</th>
+                <th scope="col" className={thNumClassName}>Price</th>
+                <th scope="col" className={thNumClassName}>Capacity</th>
+                <th scope="col" className={thClassName}>
+                  <span className="sr-only">Actions</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {ticketTypes.map((ticketType) => (
+                <tr key={ticketType.id} className={trClassName}>
+                  <td className={tdPrimaryClassName}>{ticketType.name}</td>
+                  <td className={tdNumClassName}>{formatPrice(ticketType.priceMinorUnits, ticketType.currency)}</td>
+                  <td className={tdNumClassName}>{ticketType.capacity}</td>
+                  <td className={tdClassName}>
+                    <div className={rowActionsClassName}>
+                      <button
+                        type="button"
+                        onClick={() => startEdit(ticketType)}
+                        className="text-sm font-medium text-primary-950 underline-offset-2 hover:underline"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(ticketType.id)}
+                        disabled={submitting}
+                        className="text-sm font-medium text-red-700 underline-offset-2 hover:underline disabled:opacity-50"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
-      <form onSubmit={handleSubmit} className="mt-8 grid gap-4 rounded-lg border border-neutral-100 p-6 sm:grid-cols-3">
+      <form onSubmit={handleSubmit} className="mt-8 grid gap-4 rounded-xl border border-neutral-200 bg-white p-6 shadow-sm sm:grid-cols-3">
         <h3 className="text-base font-semibold text-neutral-900 sm:col-span-3">
           {editingId ? 'Edit Ticket Type' : 'Add Ticket Type'}
         </h3>
@@ -153,7 +174,7 @@ export function TicketTypeManager({ eventId, ticketTypes }: { eventId: string; t
             value={form.name}
             required
             onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-            className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-primary-950 focus:outline-none focus:ring-2 focus:ring-primary-950"
+            className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm transition-colors focus:border-primary-950 focus:outline-none focus:ring-2 focus:ring-primary-950/30"
           />
         </div>
         <div>
@@ -168,7 +189,7 @@ export function TicketTypeManager({ eventId, ticketTypes }: { eventId: string; t
             value={form.price}
             required
             onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
-            className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-primary-950 focus:outline-none focus:ring-2 focus:ring-primary-950"
+            className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm transition-colors focus:border-primary-950 focus:outline-none focus:ring-2 focus:ring-primary-950/30"
           />
         </div>
         <div>
@@ -183,19 +204,23 @@ export function TicketTypeManager({ eventId, ticketTypes }: { eventId: string; t
             value={form.capacity}
             required
             onChange={(e) => setForm((f) => ({ ...f, capacity: e.target.value }))}
-            className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-primary-950 focus:outline-none focus:ring-2 focus:ring-primary-950"
+            className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm transition-colors focus:border-primary-950 focus:outline-none focus:ring-2 focus:ring-primary-950/30"
           />
         </div>
         <div className="flex items-center gap-4 sm:col-span-3">
           <button
             type="submit"
             disabled={submitting}
-            className="rounded-full bg-primary-950 px-6 py-2 text-sm font-medium text-neutral-50 disabled:opacity-50"
+            className="rounded-full bg-primary-950 px-6 py-2 text-sm font-medium text-neutral-50 transition-colors hover:bg-primary-900 disabled:opacity-50"
           >
             {editingId ? 'Save Changes' : 'Add Ticket Type'}
           </button>
           {editingId ? (
-            <button type="button" onClick={resetForm} className="text-sm font-medium text-neutral-600 underline">
+            <button
+              type="button"
+              onClick={resetForm}
+              className="text-sm font-medium text-neutral-600 underline-offset-2 hover:underline"
+            >
               Cancel
             </button>
           ) : null}

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { TicketTypeManager, type TicketTypeRow } from '@/components/admin/ticket-type-manager';
+import { useConfirm } from '@/components/confirm-dialog';
 
 const TABS = [
   'General',
@@ -99,6 +100,7 @@ export function EventEditorForm({
   canPublish: boolean;
 }) {
   const router = useRouter();
+  const { confirm, dialog } = useConfirm();
   const isEdit = Boolean(initialValues?.id);
   const [values, setValues] = useState<EventEditorInitialValues>(initialValues ?? EMPTY_VALUES);
   const [activeTab, setActiveTab] = useState<Tab>('General');
@@ -191,6 +193,25 @@ export function EventEditorForm({
         setError(data.error?.message ?? 'Unable to start sales');
         return;
       }
+      router.refresh();
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!initialValues?.id) return;
+    if (!(await confirm('Delete this event? This cannot be undone.'))) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/admin/events/${initialValues.id}`, { method: 'DELETE' });
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        setError(data?.error?.message ?? 'Unable to delete event');
+        return;
+      }
+      router.push('/admin/events');
       router.refresh();
     } finally {
       setSubmitting(false);
@@ -380,7 +401,18 @@ export function EventEditorForm({
           </button>
         ) : null}
         {isEdit ? <span className="text-sm text-neutral-500">Status: {values.status}</span> : null}
+        {isEdit && values.status === 'DRAFT' ? (
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={submitting}
+            className="ml-auto text-sm font-medium text-red-700 underline-offset-2 hover:underline disabled:opacity-50"
+          >
+            Delete Event
+          </button>
+        ) : null}
       </div>
+      {dialog}
     </div>
   );
 }

@@ -1,9 +1,10 @@
 import { notFound } from 'next/navigation';
 import { requirePermission } from '@/lib/auth/require-admin';
 import { hasPermission } from '@/lib/auth/rbac';
-import { listLocations } from '@/server/services/location-service';
+import { listAllLocations } from '@/server/services/location-service';
 import { EventNotFoundError, getAdminEventById } from '@/server/services/event-service';
 import { EventEditorForm, type EventEditorInitialValues } from '@/components/admin/event-editor-form';
+import { BackLink } from '@/components/admin/ui';
 
 function toDateTimeLocal(date: Date | null | undefined): string {
   if (!date) return '';
@@ -17,7 +18,7 @@ interface EditEventPageProps {
 export default async function EditEventPage({ params }: EditEventPageProps) {
   const session = await requirePermission('events:edit');
   const { id } = await params;
-  const locations = await listLocations();
+  const locations = await listAllLocations();
 
   let event;
   try {
@@ -58,6 +59,7 @@ export default async function EditEventPage({ params }: EditEventPageProps) {
 
   return (
     <div>
+      <BackLink href="/admin/events" label="Back to Events" />
       <h1 className="text-2xl font-semibold text-neutral-900">Edit Event: {event.title}</h1>
       <EventEditorForm
         initialValues={initialValues}

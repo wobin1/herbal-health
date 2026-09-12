@@ -1,6 +1,7 @@
 import type { Instructor, Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db/client';
 import { recordAuditLog } from '@/server/services/audit-log-service';
+import { buildPageResult, toSkipTake, type PageParams } from '@/lib/pagination';
 
 export class InstructorNotFoundError extends Error {}
 
@@ -9,8 +10,13 @@ export interface Actor {
   ipAddress?: string | null;
 }
 
-export async function listInstructors() {
-  return prisma.instructor.findMany({ orderBy: { sortOrder: 'asc' } });
+export async function listInstructors(pageParams: PageParams) {
+  const { skip, take } = toSkipTake(pageParams);
+  const [instructors, total] = await Promise.all([
+    prisma.instructor.findMany({ orderBy: { sortOrder: 'asc' }, skip, take }),
+    prisma.instructor.count(),
+  ]);
+  return buildPageResult(instructors, total, pageParams);
 }
 
 export async function getInstructorById(id: string) {

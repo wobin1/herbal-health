@@ -32,20 +32,23 @@ async function main() {
     data: [
       {
         icon: 'shield',
-        title: 'Evidence-Informed Content',
-        description: 'Curriculum reviewed by licensed naturopathic doctors and herbal educators.',
+        title: 'Botanical Foundations',
+        description:
+          'Discover the core principles of plant-based medicine, including plant identification and the science of botanical synergy.',
         sortOrder: 1,
       },
       {
         icon: 'heart',
-        title: 'Hands-On Practical Skills',
-        description: 'Leave with techniques you can apply at home the very same day.',
+        title: 'Traditional Remedies',
+        description:
+          'Learn to prepare and use traditional herbal preparations such as tinctures, infusions, and herbal salves for daily wellness.',
         sortOrder: 2,
       },
       {
         icon: 'certificate',
-        title: 'Certificate of Completion',
-        description: 'Every attendee receives a certificate to mark their achievement.',
+        title: 'Wellness Integration',
+        description:
+          'Explore how herbal wisdom can be integrated into your daily life to support blood pressure and blood sugar balance.',
         sortOrder: 3,
       },
     ],
@@ -69,20 +72,34 @@ async function main() {
 
   const faqs: Array<{ question: string; answer: string; sortOrder: number }> = [
     {
-      question: 'Do I need any prior knowledge to attend a seminar?',
-      answer: 'No prior knowledge is required — our seminars are designed for all experience levels.',
+      question: 'What can I expect from the seminar?',
+      answer:
+        'Our seminars are hands-on educational workshops where you will learn the fundamentals of herbal preparation and traditional wellness practices. We focus on the educational perspective of herbs for foundational health support.',
       sortOrder: 1,
     },
     {
-      question: 'Are seminars refundable?',
-      answer: 'Yes, refunds are available according to our refund policy for each event.',
+      question: 'What materials are provided?',
+      answer:
+        'We provide all necessary herbal materials and preparation tools for the duration of the tour. Participants are encouraged to bring a notebook and a pen to take notes on the traditional methods taught.',
       sortOrder: 2,
     },
     {
-      question: 'Is this seminar series a substitute for medical advice?',
+      question: 'Who is the seminar for?',
       answer:
-        'No. Our seminars are educational only and are not a substitute for professional medical advice, diagnosis, or treatment.',
+        'The seminar is designed for adults interested in learning traditional herbal preparation methods and foundational wellness practices. It is ideal for those seeking an educational perspective on herbal health.',
       sortOrder: 3,
+    },
+    {
+      question: 'Are there any prerequisites?',
+      answer:
+        'No prior experience is required. Our workshops are accessible to beginners and those with some foundational knowledge. We focus on the educational aspects of herbal preparation for all levels.',
+      sortOrder: 4,
+    },
+    {
+      question: 'How do I register for a tour?',
+      answer:
+        'Registration and booking can be completed through our dedicated registration system. You can find the upcoming city tours and seminar details on our Events page or by contacting us directly.',
+      sortOrder: 5,
     },
   ];
   for (const faq of faqs) {
@@ -97,8 +114,8 @@ async function main() {
   }> = [
     {
       slug: 'ABOUT',
-      title: 'About the Herbal Health Seminar Series',
-      body: 'The Herbal Health Seminar Series brings accessible, evidence-informed herbal health education to communities across the country.\n\nOur instructors combine traditional herbal knowledge with modern research to help attendees make informed wellness decisions.',
+      title: 'Dr. JC Goodman, ND',
+      body: 'Dr. J. Christopher Goodman, ND, is a highly experienced naturopathic doctor and natural health specialist with over 30 years of practice. A Master Herbalist trained in Western, Ayurvedic, and Chinese traditions, he is also a Certified Nutritionist and Certified Health Specialist. Dr. Goodman has studied extensively in botany, nutrition, physical therapy, stress management, and holistic practices such as Reflexology, Iridology, Qi-gong, Tai Chi, and Yoga. He takes a comprehensive approach to wellness, combining multiple natural modalities to create individualized, lasting results for his patients. Throughout his career, Dr. Goodman has collaborated with a wide range of health practitioners and organizations, been featured in national publications, and shared his expertise through television appearances and speaking engagements. Dedicated to promoting natural health, his mission is to empower individuals to achieve optimal well-being through holistic, non-chemical methods.\n\nTogether, the Alternative Wellness Center team is dedicated to providing exceptional service, compassionate care, and holistic wellness solutions tailored to every patient’s needs.',
     },
     {
       slug: 'CONTACT',

@@ -12,7 +12,9 @@ export type Permission =
   | 'faqs:manage'
   | 'pages:manage'
   | 'instructors:manage'
+  | 'educationFocusItems:manage'
   | 'locations:manage'
+  | 'contactMessages:manage'
   | 'users:manage'
   | 'auditLogs:view'
   | 'settings:manage';
@@ -29,7 +31,9 @@ const ADMIN_PERMISSIONS: Permission[] = [
   'faqs:manage',
   'pages:manage',
   'instructors:manage',
+  'educationFocusItems:manage',
   'locations:manage',
+  'contactMessages:manage',
   'users:manage',
   'auditLogs:view',
   'settings:manage',
@@ -41,7 +45,9 @@ const CONTENT_EDITOR_PERMISSIONS: Permission[] = [
   'faqs:manage',
   'pages:manage',
   'instructors:manage',
+  'educationFocusItems:manage',
   'locations:manage',
+  'contactMessages:manage',
 ];
 
 const PERMISSIONS_BY_ROLE: Record<AdminRole, Permission[]> = {

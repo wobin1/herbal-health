@@ -51,13 +51,16 @@ export async function getPublishedEducationalFocusItems() {
   });
 }
 
+const HOMEPAGE_FEATURED_EVENTS_LIMIT = 5;
+
 export async function getFeaturedEvents() {
   return prisma.event.findMany({
     where: {
       isFeatured: true,
       status: { in: [...PUBLICLY_VISIBLE_EVENT_STATUSES] },
     },
-    orderBy: { sortOrder: 'asc' },
+    orderBy: { startAt: 'asc' },
+    take: HOMEPAGE_FEATURED_EVENTS_LIMIT,
   });
 }
 

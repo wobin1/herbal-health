@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const prismaMock = {
   $transaction: vi.fn(),
-  order: { update: vi.fn(), findMany: vi.fn(), findUnique: vi.fn() },
+  order: { update: vi.fn(), findMany: vi.fn(), findUnique: vi.fn(), count: vi.fn() },
 };
 
 vi.mock('@/lib/db/client', () => ({ prisma: prismaMock }));
@@ -161,18 +161,31 @@ describe('attachCheckoutSession', () => {
 describe('listOrders', () => {
   it('filters by status and buyer email when provided', async () => {
     prismaMock.order.findMany.mockResolvedValue([]);
-    await listOrders({ status: 'PAID', buyerEmail: 'jane@example.com' });
+    prismaMock.order.count.mockResolvedValue(0);
+    await listOrders({ status: 'PAID', buyerEmail: 'jane@example.com' }, { page: 1, pageSize: 20 });
     expect(prismaMock.order.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { status: 'PAID', buyerEmail: { equals: 'jane@example.com', mode: 'insensitive' } },
+        skip: 0,
+        take: 20,
       }),
     );
   });
 
   it('returns all orders when no filters are given', async () => {
     prismaMock.order.findMany.mockResolvedValue([]);
-    await listOrders({});
+    prismaMock.order.count.mockResolvedValue(0);
+    await listOrders({}, { page: 1, pageSize: 20 });
     expect(prismaMock.order.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: {} }));
+  });
+
+  it('paginates using the given page and page size', async () => {
+    prismaMock.order.findMany.mockResolvedValue([]);
+    prismaMock.order.count.mockResolvedValue(45);
+    const result = await listOrders({}, { page: 2, pageSize: 20 });
+    expect(prismaMock.order.findMany).toHaveBeenCalledWith(expect.objectContaining({ skip: 20, take: 20 }));
+    expect(result.total).toBe(45);
+    expect(result.totalPages).toBe(3);
   });
 });
 

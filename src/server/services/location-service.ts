@@ -1,6 +1,7 @@
 import type { Location, Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db/client';
 import { recordAuditLog } from '@/server/services/audit-log-service';
+import { buildPageResult, toSkipTake, type PageParams } from '@/lib/pagination';
 
 export class LocationNotFoundError extends Error {}
 
@@ -9,8 +10,17 @@ export interface Actor {
   ipAddress?: string | null;
 }
 
-export async function listLocations() {
+export async function listAllLocations() {
   return prisma.location.findMany({ orderBy: { name: 'asc' } });
+}
+
+export async function listLocations(pageParams: PageParams) {
+  const { skip, take } = toSkipTake(pageParams);
+  const [locations, total] = await Promise.all([
+    prisma.location.findMany({ orderBy: { name: 'asc' }, skip, take }),
+    prisma.location.count(),
+  ]);
+  return buildPageResult(locations, total, pageParams);
 }
 
 export async function getLocationById(id: string) {

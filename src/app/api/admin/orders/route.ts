@@ -3,6 +3,7 @@ import { requirePermission, UnauthorizedError, ForbiddenError } from '@/lib/auth
 import { errorResponse } from '@/lib/http/errors';
 import { listOrders, type OrderListFilters } from '@/server/services/order-service';
 import type { OrderStatus } from '@prisma/client';
+import { parsePageParams } from '@/lib/pagination';
 
 const VALID_STATUSES: OrderStatus[] = ['PENDING', 'PAID', 'EXPIRED', 'CANCELLED', 'REFUNDED'];
 
@@ -16,8 +17,9 @@ export async function GET(request: NextRequest) {
       eventId: searchParams.get('eventId') ?? undefined,
       status: statusParam && VALID_STATUSES.includes(statusParam as OrderStatus) ? (statusParam as OrderStatus) : undefined,
     };
-    const orders = await listOrders(filters);
-    return NextResponse.json({ orders });
+    const pageParams = parsePageParams(searchParams);
+    const result = await listOrders(filters, pageParams);
+    return NextResponse.json({ orders: result.items, page: result.page, pageSize: result.pageSize, total: result.total, totalPages: result.totalPages });
   } catch (error) {
     if (error instanceof UnauthorizedError) return errorResponse(401, 'UNAUTHENTICATED', 'Not signed in');
     if (error instanceof ForbiddenError) return errorResponse(403, 'FORBIDDEN', 'Insufficient permissions');

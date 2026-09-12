@@ -4,6 +4,7 @@ import { errorResponse } from '@/lib/http/errors';
 import { eventCreateSchema } from '@/lib/validation/event';
 import { createEvent, listAdminEvents } from '@/server/services/event-service';
 import type { EventStatus } from '@prisma/client';
+import { parsePageParams } from '@/lib/pagination';
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,8 +12,9 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const status = searchParams.get('status') as EventStatus | null;
     const keyword = searchParams.get('keyword') ?? undefined;
-    const events = await listAdminEvents({ status: status ?? undefined, keyword });
-    return NextResponse.json({ events });
+    const pageParams = parsePageParams(searchParams);
+    const result = await listAdminEvents({ status: status ?? undefined, keyword }, pageParams);
+    return NextResponse.json({ events: result.items, page: result.page, pageSize: result.pageSize, total: result.total, totalPages: result.totalPages });
   } catch (error) {
     if (error instanceof UnauthorizedError) return errorResponse(401, 'UNAUTHENTICATED', 'Not signed in');
     if (error instanceof ForbiddenError) return errorResponse(403, 'FORBIDDEN', 'Insufficient permissions');

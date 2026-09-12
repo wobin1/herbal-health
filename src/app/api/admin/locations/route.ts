@@ -3,12 +3,14 @@ import { requirePermission, UnauthorizedError, ForbiddenError } from '@/lib/auth
 import { errorResponse } from '@/lib/http/errors';
 import { locationSchema } from '@/lib/validation/location';
 import { createLocation, listLocations } from '@/server/services/location-service';
+import { parsePageParams } from '@/lib/pagination';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     await requirePermission('locations:manage');
-    const locations = await listLocations();
-    return NextResponse.json({ locations });
+    const pageParams = parsePageParams(request.nextUrl.searchParams);
+    const result = await listLocations(pageParams);
+    return NextResponse.json({ locations: result.items, page: result.page, pageSize: result.pageSize, total: result.total, totalPages: result.totalPages });
   } catch (error) {
     if (error instanceof UnauthorizedError) return errorResponse(401, 'UNAUTHENTICATED', 'Not signed in');
     if (error instanceof ForbiddenError) return errorResponse(403, 'FORBIDDEN', 'Insufficient permissions');
