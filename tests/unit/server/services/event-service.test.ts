@@ -15,12 +15,18 @@ const prismaMock = {
     update: vi.fn(),
     delete: vi.fn(),
   },
+  registration: {
+    findMany: vi.fn().mockResolvedValue([]),
+  },
 };
 
 vi.mock('@/lib/db/client', () => ({ prisma: prismaMock }));
 
 const auditLogMock = vi.fn();
 vi.mock('@/server/services/audit-log-service', () => ({ recordAuditLog: auditLogMock }));
+
+const enqueueEmailMock = vi.fn();
+vi.mock('@/server/services/email-queue-service', () => ({ enqueueEmail: enqueueEmailMock }));
 
 const {
   listPublicEvents,
@@ -136,10 +142,29 @@ describe('publishEvent', () => {
 describe('cancelEvent', () => {
   it('sets status to CANCELLED and records an audit log', async () => {
     prismaMock.event.findUnique.mockResolvedValue(COMPLETE_EVENT);
-    prismaMock.event.update.mockResolvedValue({ ...COMPLETE_EVENT, status: 'CANCELLED' });
+    prismaMock.event.update.mockResolvedValue({ ...COMPLETE_EVENT, status: 'CANCELLED', city: 'Austin', state: 'TX' });
     const result = await cancelEvent('evt-1', ACTOR);
     expect(result.status).toBe('CANCELLED');
     expect(auditLogMock).toHaveBeenCalledWith(expect.objectContaining({ action: 'event.cancelled' }));
+  });
+
+  it('notifies every confirmed registrant of the cancellation', async () => {
+    prismaMock.event.findUnique.mockResolvedValue(COMPLETE_EVENT);
+    const cancelled = { ...COMPLETE_EVENT, status: 'CANCELLED', city: 'Austin', state: 'TX' };
+    prismaMock.event.update.mockResolvedValue(cancelled);
+    prismaMock.registration.findMany.mockResolvedValueOnce([
+      { id: 'reg-1', reference: 'HHS-2026-ABCDEF', attendee: { firstName: 'Jane', email: 'jane@example.com' } },
+    ]);
+
+    await cancelEvent('evt-1', ACTOR);
+
+    expect(prismaMock.registration.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { eventId: 'evt-1', status: 'CONFIRMED' } }),
+    );
+    expect(enqueueEmailMock).toHaveBeenCalledWith(
+      prismaMock,
+      expect.objectContaining({ type: 'EVENT_CANCELLATION', toEmail: 'jane@example.com' }),
+    );
   });
 });
 

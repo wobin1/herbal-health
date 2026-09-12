@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const prismaMock = {
   $transaction: vi.fn(),
+  order: { findUnique: vi.fn() },
 };
 
 vi.mock('@/lib/db/client', () => ({ prisma: prismaMock }));
@@ -9,10 +10,10 @@ vi.mock('@/lib/db/client', () => ({ prisma: prismaMock }));
 const auditLogMock = vi.fn();
 vi.mock('@/server/services/audit-log-service', () => ({ recordAuditLog: auditLogMock }));
 
-const emailMock = vi.fn();
-vi.mock('@/lib/email/registration-confirmation', () => ({ sendRegistrationConfirmationEmail: emailMock }));
+const enqueueEmailMock = vi.fn();
+vi.mock('@/server/services/email-queue-service', () => ({ enqueueEmail: enqueueEmailMock }));
 
-const { processCheckoutCompleted, OrderNotFoundError } = await import(
+const { processCheckoutCompleted, processCheckoutExpired, OrderNotFoundError } = await import(
   '@/server/services/payment-webhook-service'
 );
 
@@ -49,6 +50,11 @@ describe('processCheckoutCompleted', () => {
       id: 'order-1',
       eventId: 'evt-1',
       status: 'PENDING',
+      buyerEmail: 'buyer@example.com',
+      buyerName: 'Jane Doe',
+      totalMinorUnits: 10000,
+      currency: 'USD',
+      event: { title: 'Herbal Basics', startAt: new Date('2026-06-01T00:00:00Z'), city: 'Austin', state: 'TX' },
       items: [
         {
           id: 'item-1',
@@ -78,7 +84,14 @@ describe('processCheckoutCompleted', () => {
       data: { reservedCount: { decrement: 2 }, soldCount: { increment: 2 } },
     });
     expect(tx.registration.create).toHaveBeenCalledTimes(2);
-    expect(emailMock).toHaveBeenCalledTimes(2);
+    expect(enqueueEmailMock).toHaveBeenCalledWith(
+      tx,
+      expect.objectContaining({ type: 'REGISTRATION_CONFIRMATION' }),
+    );
+    expect(enqueueEmailMock).toHaveBeenCalledWith(
+      tx,
+      expect.objectContaining({ type: 'PAYMENT_RECEIPT', toEmail: 'buyer@example.com' }),
+    );
     expect(auditLogMock).toHaveBeenCalledWith(expect.objectContaining({ action: 'order.paid' }));
   });
 
@@ -123,6 +136,11 @@ describe('processCheckoutCompleted', () => {
         id: 'order-1',
         eventId: 'evt-1',
         status: 'PENDING',
+        buyerEmail: 'buyer@example.com',
+        buyerName: 'Jane Doe',
+        totalMinorUnits: 5000,
+        currency: 'USD',
+        event: { title: 'Herbal Basics', startAt: new Date('2026-06-01T00:00:00Z'), city: 'Austin', state: 'TX' },
         items: [{ id: 'item-1', eventTicketTypeId: 'tt-1', quantity: 1, attendees: [{ id: 'att-1', firstName: 'A', lastName: 'B', email: 'a@example.com' }] }],
       });
       tx.payment.create = vi.fn().mockImplementation(async () => {
@@ -146,5 +164,39 @@ describe('processCheckoutCompleted', () => {
       expect(tx.registration.create).toHaveBeenCalledTimes(1);
       expect(tx.order.update).toHaveBeenCalledTimes(1);
     });
+  });
+});
+
+describe('processCheckoutExpired', () => {
+  const EXPIRED_EVENT = {
+    type: 'checkout.session.expired' as const,
+    providerEventId: 'evt_expired_1',
+    orderId: 'order-1',
+    raw: {},
+  };
+
+  it('throws OrderNotFoundError when the order does not exist', async () => {
+    prismaMock.order.findUnique.mockResolvedValue(null);
+    await expect(processCheckoutExpired(EXPIRED_EVENT)).rejects.toThrow(OrderNotFoundError);
+  });
+
+  it('enqueues a payment failure email to the buyer', async () => {
+    prismaMock.order.findUnique.mockResolvedValue({
+      id: 'order-1',
+      buyerEmail: 'buyer@example.com',
+      buyerName: 'Jane Doe',
+      event: { title: 'Herbal Basics', startAt: new Date('2026-06-01T00:00:00Z'), city: 'Austin', state: 'TX' },
+    });
+
+    await processCheckoutExpired(EXPIRED_EVENT);
+
+    expect(enqueueEmailMock).toHaveBeenCalledWith(
+      prismaMock,
+      expect.objectContaining({
+        type: 'PAYMENT_FAILURE',
+        toEmail: 'buyer@example.com',
+        dedupeKey: 'payment-failure:evt_expired_1',
+      }),
+    );
   });
 });

@@ -2,7 +2,7 @@ import { prisma } from '@/lib/db/client';
 import { recordAuditLog } from '@/server/services/audit-log-service';
 import { releaseSoldCapacity } from '@/server/services/inventory-service';
 import { getPaymentProvider } from '@/lib/payments/stripe';
-import { sendRefundConfirmationEmail } from '@/lib/email/registration-confirmation';
+import { enqueueEmail } from '@/server/services/email-queue-service';
 
 export class OrderNotFoundError extends Error {}
 export class OrderNotRefundableError extends Error {}
@@ -27,6 +27,7 @@ export async function refundOrder(orderId: string, actor: RefundActor) {
       items: true,
       payments: true,
       registrations: { include: { attendee: true } },
+      event: true,
     },
   });
   if (!order) {
@@ -65,14 +66,22 @@ export async function refundOrder(orderId: string, actor: RefundActor) {
     });
   });
 
+  const amount = new Intl.NumberFormat('en-US', { style: 'currency', currency: payment.currency }).format(
+    payment.amountMinorUnits / 100,
+  );
   for (const registration of order.registrations) {
-    await sendRefundConfirmationEmail({
+    await enqueueEmail(prisma, {
+      type: 'REFUND_CONFIRMATION',
       toEmail: registration.attendee.email,
-      attendeeName: `${registration.attendee.firstName} ${registration.attendee.lastName}`,
-      eventTitle: order.eventId,
-      reference: registration.reference,
-      amountMinorUnits: payment.amountMinorUnits,
-      currency: payment.currency,
+      dedupeKey: `refund-confirmation:${registration.id}`,
+      variables: {
+        attendeeFirstName: registration.attendee.firstName,
+        registrationReference: registration.reference,
+        amount,
+        eventTitle: order.event.title,
+        eventStartAt: order.event.startAt.toISOString(),
+        eventLocation: `${order.event.city}, ${order.event.state}`,
+      },
     });
   }
 

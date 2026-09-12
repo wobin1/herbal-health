@@ -303,7 +303,7 @@ model OrderItem {
 }
 
 model Attendee {
-  id                 String   @id @default(cuid())
+  id                 String    @id @default(cuid())
   orderId            String
   orderItemId        String
   firstName          String
@@ -315,7 +315,7 @@ model Attendee {
   accessibilityNotes String?
   internalNotes      String?
   attendedAt         DateTime?
-  createdAt          DateTime @default(now())
+  createdAt          DateTime  @default(now())
 
   order        Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
   orderItem    OrderItem     @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
@@ -403,4 +403,47 @@ model AuditLog {
 
   @@index([entityType, entityId])
   @@index([actorId])
+}
+
+enum EmailType {
+  REGISTRATION_CONFIRMATION
+  PAYMENT_RECEIPT
+  PAYMENT_FAILURE
+  EVENT_REMINDER
+  EVENT_UPDATE
+  EVENT_CANCELLATION
+  REGISTRATION_CANCELLATION
+  REFUND_CONFIRMATION
+  REGISTRATION_TRANSFER
+  ADMIN_NEW_REGISTRATION
+}
+
+enum EmailStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+/**
+ * Outbound email outbox: writing a row here (instead of calling the
+ * provider inline) is what lets a payment/refund/registration transaction
+ * commit even if email delivery is slow or failing. A separate job drains
+ * PENDING rows and retries FAILED-but-not-exhausted ones. `dedupeKey` is the
+ * idempotency gate — reminder jobs and at-least-once retries key off it so a
+ * duplicate enqueue never sends the same email twice.
+ */
+model EmailMessage {
+  id        String      @id @default(cuid())
+  type      EmailType
+  toEmail   String
+  dedupeKey String      @unique
+  variables Json
+  status    EmailStatus @default(PENDING)
+  attempts  Int         @default(0)
+  lastError String?
+  sentAt    DateTime?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@index([status])
 }

@@ -2,8 +2,12 @@ import { prisma } from '@/lib/db/client';
 import { recordAuditLog } from '@/server/services/audit-log-service';
 import { convertReservationToSale } from '@/server/services/inventory-service';
 import { createRegistrationWithUniqueReference } from '@/server/services/registration-service';
-import { sendRegistrationConfirmationEmail } from '@/lib/email/registration-confirmation';
+import { enqueueEmail } from '@/server/services/email-queue-service';
 import type { PaymentWebhookEvent } from '@/lib/payments/types';
+
+function formatMoney(amountMinorUnits: number, currency: string): string {
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amountMinorUnits / 100);
+}
 
 export class OrderNotFoundError extends Error {}
 
@@ -44,7 +48,7 @@ export async function processCheckoutCompleted(
 
       const order = await tx.order.findUnique({
         where: { id: event.orderId },
-        include: { items: { include: { attendees: true } } },
+        include: { items: { include: { attendees: true } }, event: true },
       });
       if (!order) {
         throw new OrderNotFoundError(`Order ${event.orderId} not found`);
@@ -58,6 +62,12 @@ export async function processCheckoutCompleted(
 
       await tx.order.update({ where: { id: order.id }, data: { status: 'PAID' } });
 
+      const eventVariables = {
+        eventTitle: order.event.title,
+        eventStartAt: order.event.startAt.toISOString(),
+        eventLocation: `${order.event.city}, ${order.event.state}`,
+      };
+
       for (const item of order.items) {
         await convertReservationToSale(tx, item.eventTicketTypeId, item.quantity);
         for (const attendee of item.attendees) {
@@ -67,14 +77,41 @@ export async function processCheckoutCompleted(
             attendeeId: attendee.id,
             eventId: order.eventId,
           });
-          await sendRegistrationConfirmationEmail({
+          await enqueueEmail(tx, {
+            type: 'REGISTRATION_CONFIRMATION',
             toEmail: attendee.email,
-            attendeeName: `${attendee.firstName} ${attendee.lastName}`,
-            eventTitle: order.eventId,
-            reference: registration.reference,
+            dedupeKey: `registration-confirmation:${registration.id}`,
+            variables: {
+              attendeeFirstName: attendee.firstName,
+              registrationReference: registration.reference,
+              ...eventVariables,
+            },
           });
+          if (process.env.ADMIN_NOTIFICATION_EMAIL) {
+            await enqueueEmail(tx, {
+              type: 'ADMIN_NEW_REGISTRATION',
+              toEmail: process.env.ADMIN_NOTIFICATION_EMAIL,
+              dedupeKey: `admin-new-registration:${registration.id}`,
+              variables: {
+                attendeeFirstName: attendee.firstName,
+                registrationReference: registration.reference,
+                ...eventVariables,
+              },
+            });
+          }
         }
       }
+
+      await enqueueEmail(tx, {
+        type: 'PAYMENT_RECEIPT',
+        toEmail: order.buyerEmail,
+        dedupeKey: `payment-receipt:${order.id}`,
+        variables: {
+          attendeeFirstName: order.buyerName,
+          orderTotal: formatMoney(order.totalMinorUnits, order.currency),
+          ...eventVariables,
+        },
+      });
 
       await recordAuditLog({
         action: 'order.paid',
@@ -92,4 +129,34 @@ export async function processCheckoutCompleted(
     }
     throw error;
   }
+}
+
+/**
+ * A checkout session that expired unpaid (buyer abandoned, card declined and
+ * never retried, etc). The order itself already transitions to EXPIRED via
+ * the separate reservation-cleanup job; this only notifies the buyer that
+ * their payment did not go through.
+ */
+export async function processCheckoutExpired(
+  event: Extract<PaymentWebhookEvent, { type: 'checkout.session.expired' }>,
+): Promise<void> {
+  const order = await prisma.order.findUnique({
+    where: { id: event.orderId },
+    include: { event: true },
+  });
+  if (!order) {
+    throw new OrderNotFoundError(`Order ${event.orderId} not found`);
+  }
+
+  await enqueueEmail(prisma, {
+    type: 'PAYMENT_FAILURE',
+    toEmail: order.buyerEmail,
+    dedupeKey: `payment-failure:${event.providerEventId}`,
+    variables: {
+      attendeeFirstName: order.buyerName,
+      eventTitle: order.event.title,
+      eventStartAt: order.event.startAt.toISOString(),
+      eventLocation: `${order.event.city}, ${order.event.state}`,
+    },
+  });
 }

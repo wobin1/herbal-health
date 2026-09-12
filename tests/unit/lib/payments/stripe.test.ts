@@ -83,6 +83,20 @@ describe('StripePaymentProvider.parseWebhookEvent', () => {
     );
   });
 
+  it('normalizes a verified checkout.session.expired event', () => {
+    const client = makeClient();
+    (client.webhooks.constructEvent as ReturnType<typeof vi.fn>).mockReturnValue({
+      id: 'evt_3',
+      type: 'checkout.session.expired',
+      data: { object: { id: 'cs_test_1', metadata: { orderId: 'order-1' } } },
+    });
+    const provider = new StripePaymentProvider(client as never, 'whsec_test');
+    const event = provider.parseWebhookEvent('{}', 'valid-signature');
+    expect(event).toEqual(
+      expect.objectContaining({ type: 'checkout.session.expired', providerEventId: 'evt_3', orderId: 'order-1' }),
+    );
+  });
+
   it('returns an unhandled event for types the app does not process', () => {
     const client = makeClient();
     (client.webhooks.constructEvent as ReturnType<typeof vi.fn>).mockReturnValue({

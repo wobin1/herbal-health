@@ -80,6 +80,15 @@ export class StripePaymentProvider implements PaymentProvider {
       };
     }
 
+    if (event.type === 'checkout.session.expired') {
+      const session = event.data.object as Stripe.Checkout.Session;
+      const orderId = session.metadata?.orderId;
+      if (!orderId) {
+        return { type: 'unhandled', providerEventId: event.id, raw: event };
+      }
+      return { type: 'checkout.session.expired', providerEventId: event.id, orderId, raw: event };
+    }
+
     return { type: 'unhandled', providerEventId: event.id, raw: event };
   }
 

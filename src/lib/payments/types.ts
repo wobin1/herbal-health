@@ -35,6 +35,12 @@ export type PaymentWebhookEvent =
       raw: unknown;
     }
   | {
+      type: 'checkout.session.expired';
+      providerEventId: string;
+      orderId: string;
+      raw: unknown;
+    }
+  | {
       type: 'unhandled';
       providerEventId: string;
       raw: unknown;

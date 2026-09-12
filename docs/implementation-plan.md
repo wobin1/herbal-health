@@ -207,6 +207,32 @@ reason documented in Phases 2-4 — verify via CI.
 **Exit gate:** all required emails send correctly in staging with a test provider; reminder job
 runs on schedule without duplicate sends on retry.
 
+Gate status: lint, typecheck, and unit tests (154/154) pass locally. All nine required email types
+are sent through a single outbox (`EmailMessage`, `src/server/services/email-queue-service.ts`)
+rather than inline provider calls — `enqueueEmail` writes a `PENDING` row (inside the same
+transaction where relevant, e.g. the checkout-webhook transaction), and the cron-triggered
+`POST /api/jobs/send-emails` (mirrors the existing `expire-reservations` job's `CRON_SECRET`
+bearer-auth pattern) drains it via `processPendingEmails`, retrying up to 5 attempts before marking
+a message `FAILED`. This fixes a pre-existing bug where the payment webhook sent the confirmation
+email synchronously *inside* the DB transaction (violating the "payment must succeed even if email
+fails" rule) and passed `order.eventId` as the email's event title. Every enqueue carries a unique
+`dedupeKey` (DB-unique) as the idempotency gate — reminder jobs and webhook retries can call
+`enqueueEmail` again for the same logical email and it silently no-ops rather than double-sending.
+`src/server/services/reminder-service.ts` implements the 7-day/1-day reminder job
+(`POST /api/jobs/send-reminders`), windowing on `Registration.status = CONFIRMED` and
+`Event.startAt`, keyed `reminder-{7d,1d}:{registrationId}`. Provider abstraction
+(`src/lib/email/provider.ts`) supports Resend over HTTP (`EMAIL_PROVIDER=resend`) or a no-op
+fallback for dev/test (throws instead of silently no-op-ing if `NODE_ENV=production` and unset).
+`EmailMessage` rows themselves serve as the delivery/failure log (status, attempts, lastError,
+sentAt) — no separate log table. Event cancellation (`cancelEvent`) and schedule/location changes
+(`updateEvent`, only when `startAt`/`endAt`/`locationId`/`city`/`state` actually changed) now notify
+every `CONFIRMED` registrant, which they did not before. Added a `checkout.session.expired` Stripe
+webhook branch (`processCheckoutExpired`) to back the required payment-failure email — this event
+type was not previously handled at all. Admin new-registration alerts are skipped (not queued to a
+blank address) when `ADMIN_NOTIFICATION_EMAIL` is unset. No dedicated integration test was added for
+the outbox transaction (unit tests mock Prisma throughout, consistent with Phase 4/5's testing
+style).
+
 ---
 
 ## Phase 7 — Security, Compliance & Observability Hardening

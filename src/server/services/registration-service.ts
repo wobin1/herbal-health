@@ -2,10 +2,8 @@ import type { PrismaClient } from '@prisma/client';
 import { prisma } from '@/lib/db/client';
 import { generateRegistrationReference } from '@/lib/registration/reference';
 import { recordAuditLog } from '@/server/services/audit-log-service';
-import {
-  sendRegistrationCancellationEmail,
-  sendRegistrationConfirmationEmail,
-} from '@/lib/email/registration-confirmation';
+import { enqueueEmail } from '@/server/services/email-queue-service';
+import { randomUUID } from 'node:crypto';
 
 type Tx = Pick<PrismaClient, 'registration'>;
 
@@ -65,6 +63,14 @@ export async function findRegistrationByReferenceAndEmail(reference: string, ema
   });
 }
 
+function eventVariables(event: { title: string; startAt: Date; city: string; state: string }) {
+  return {
+    eventTitle: event.title,
+    eventStartAt: event.startAt.toISOString(),
+    eventLocation: `${event.city}, ${event.state}`,
+  };
+}
+
 async function findRegistrationWithRelationsOrThrow(registrationId: string) {
   const registration = await prisma.registration.findUnique({
     where: { id: registrationId },
@@ -82,11 +88,15 @@ export async function resendRegistrationConfirmation(
   actor?: RegistrationActor,
 ): Promise<void> {
   const registration = await findRegistrationWithRelationsOrThrow(registrationId);
-  await sendRegistrationConfirmationEmail({
+  await enqueueEmail(prisma, {
+    type: 'REGISTRATION_CONFIRMATION',
     toEmail: registration.attendee.email,
-    attendeeName: `${registration.attendee.firstName} ${registration.attendee.lastName}`,
-    eventTitle: registration.event.title,
-    reference: registration.reference,
+    dedupeKey: `registration-confirmation-resend:${registration.id}:${randomUUID()}`,
+    variables: {
+      attendeeFirstName: registration.attendee.firstName,
+      registrationReference: registration.reference,
+      ...eventVariables(registration.event),
+    },
   });
   await recordAuditLog({
     actorId: actor?.actorId,
@@ -104,11 +114,15 @@ export async function cancelRegistration(registrationId: string, actor: Registra
     where: { id: registrationId },
     data: { status: 'CANCELLED' },
   });
-  await sendRegistrationCancellationEmail({
+  await enqueueEmail(prisma, {
+    type: 'REGISTRATION_CANCELLATION',
     toEmail: registration.attendee.email,
-    attendeeName: `${registration.attendee.firstName} ${registration.attendee.lastName}`,
-    eventTitle: registration.event.title,
-    reference: registration.reference,
+    dedupeKey: `registration-cancelled:${registration.id}`,
+    variables: {
+      attendeeFirstName: registration.attendee.firstName,
+      registrationReference: registration.reference,
+      ...eventVariables(registration.event),
+    },
   });
   await recordAuditLog({
     actorId: actor.actorId,
@@ -171,6 +185,17 @@ export async function transferRegistration(
   await prisma.attendee.update({
     where: { id: registration.attendeeId },
     data: newAttendee,
+  });
+  await enqueueEmail(prisma, {
+    type: 'REGISTRATION_TRANSFER',
+    toEmail: newAttendee.email,
+    dedupeKey: `registration-transfer:${registration.id}:${randomUUID()}`,
+    variables: {
+      attendeeFirstName: newAttendee.firstName,
+      newAttendeeName: `${newAttendee.firstName} ${newAttendee.lastName}`,
+      registrationReference: registration.reference,
+      ...eventVariables(registration.event),
+    },
   });
   await recordAuditLog({
     actorId: actor.actorId,

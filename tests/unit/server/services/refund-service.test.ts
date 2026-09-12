@@ -13,10 +13,8 @@ vi.mock('@/server/services/audit-log-service', () => ({ recordAuditLog: auditLog
 const releaseSoldCapacityMock = vi.fn();
 vi.mock('@/server/services/inventory-service', () => ({ releaseSoldCapacity: releaseSoldCapacityMock }));
 
-const sendRefundConfirmationEmailMock = vi.fn();
-vi.mock('@/lib/email/registration-confirmation', () => ({
-  sendRefundConfirmationEmail: sendRefundConfirmationEmailMock,
-}));
+const enqueueEmailMock = vi.fn();
+vi.mock('@/server/services/email-queue-service', () => ({ enqueueEmail: enqueueEmailMock }));
 
 const refundPaymentMock = vi.fn();
 vi.mock('@/lib/payments/stripe', () => ({ getPaymentProvider: () => ({ refundPayment: refundPaymentMock }) }));
@@ -46,6 +44,7 @@ function baseOrder(overrides: Record<string, unknown> = {}) {
       },
     ],
     registrations: [{ id: 'reg-1', reference: 'HHS-2026-ABCDEF', attendee: ATTENDEE }],
+    event: { title: 'Herbal Basics', startAt: new Date('2026-06-01T00:00:00Z'), city: 'Austin', state: 'TX' },
     ...overrides,
   };
 }
@@ -139,8 +138,13 @@ describe('refundOrder', () => {
 
     await refundOrder('order-1', { actorId: 'admin-1' });
 
-    expect(sendRefundConfirmationEmailMock).toHaveBeenCalledWith(
-      expect.objectContaining({ toEmail: 'jane@example.com', reference: 'HHS-2026-ABCDEF' }),
+    expect(enqueueEmailMock).toHaveBeenCalledWith(
+      prismaMock,
+      expect.objectContaining({
+        type: 'REFUND_CONFIRMATION',
+        toEmail: 'jane@example.com',
+        variables: expect.objectContaining({ registrationReference: 'HHS-2026-ABCDEF' }),
+      }),
     );
   });
 });

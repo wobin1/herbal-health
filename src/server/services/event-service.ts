@@ -1,6 +1,36 @@
 import type { Event, EventStatus, EventTicketType, Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db/client';
 import { recordAuditLog } from '@/server/services/audit-log-service';
+import { enqueueEmail } from '@/server/services/email-queue-service';
+import { randomUUID } from 'node:crypto';
+
+/** Fields that, if changed, warrant notifying already-registered attendees. */
+const NOTIFY_ON_CHANGE_FIELDS: Array<keyof Event> = ['startAt', 'endAt', 'locationId', 'city', 'state'];
+
+async function notifyRegisteredAttendees(
+  event: Event,
+  type: 'EVENT_UPDATE' | 'EVENT_CANCELLATION',
+  dedupeKeyPrefix: string,
+): Promise<void> {
+  const registrations = await prisma.registration.findMany({
+    where: { eventId: event.id, status: 'CONFIRMED' },
+    include: { attendee: true },
+  });
+  for (const registration of registrations) {
+    await enqueueEmail(prisma, {
+      type,
+      toEmail: registration.attendee.email,
+      dedupeKey: `${dedupeKeyPrefix}:${registration.id}`,
+      variables: {
+        attendeeFirstName: registration.attendee.firstName,
+        registrationReference: registration.reference,
+        eventTitle: event.title,
+        eventStartAt: event.startAt.toISOString(),
+        eventLocation: `${event.city}, ${event.state}`,
+      },
+    });
+  }
+}
 
 /** Statuses that make an event visible on public catalog pages. */
 export const PUBLICLY_VISIBLE_EVENT_STATUSES: EventStatus[] = [
@@ -157,6 +187,18 @@ export async function updateEvent(
     ipAddress: actor.ipAddress,
     metadata: { fields: Object.keys(input) },
   });
+
+  const scheduleOrLocationChanged = NOTIFY_ON_CHANGE_FIELDS.some((field) => {
+    if (!(field in input)) return false;
+    const before = existing[field];
+    const after = event[field];
+    if (before instanceof Date && after instanceof Date) return before.getTime() !== after.getTime();
+    return before !== after;
+  });
+  if (scheduleOrLocationChanged) {
+    await notifyRegisteredAttendees(event, 'EVENT_UPDATE', `event-updated:${randomUUID()}`);
+  }
+
   return event;
 }
 
@@ -216,7 +258,9 @@ export async function startSales(id: string, actor: Actor): Promise<Event> {
 }
 
 export async function cancelEvent(id: string, actor: Actor): Promise<Event> {
-  return transitionStatus(id, 'CANCELLED', 'event.cancelled', actor);
+  const event = await transitionStatus(id, 'CANCELLED', 'event.cancelled', actor);
+  await notifyRegisteredAttendees(event, 'EVENT_CANCELLATION', 'event-cancelled');
+  return event;
 }
 
 export async function completeEvent(id: string, actor: Actor): Promise<Event> {

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { errorResponse } from '@/lib/http/errors';
 import { getPaymentProvider } from '@/lib/payments/stripe';
 import { InvalidWebhookSignatureError } from '@/lib/payments/types';
-import { processCheckoutCompleted } from '@/server/services/payment-webhook-service';
+import { processCheckoutCompleted, processCheckoutExpired } from '@/server/services/payment-webhook-service';
 
 const MAX_BODY_BYTES = 256 * 1024;
 
@@ -29,13 +29,15 @@ export async function POST(request: NextRequest) {
     return errorResponse(400, 'INVALID_WEBHOOK', 'Unable to parse webhook payload');
   }
 
-  if (event.type !== 'checkout.session.completed') {
-    return NextResponse.json({ received: true });
-  }
-
   try {
-    const result = await processCheckoutCompleted(event);
-    return NextResponse.json({ received: true, duplicate: result.duplicate });
+    if (event.type === 'checkout.session.completed') {
+      const result = await processCheckoutCompleted(event);
+      return NextResponse.json({ received: true, duplicate: result.duplicate });
+    }
+    if (event.type === 'checkout.session.expired') {
+      await processCheckoutExpired(event);
+    }
+    return NextResponse.json({ received: true });
   } catch {
     return errorResponse(500, 'WEBHOOK_PROCESSING_FAILED', 'Unable to process webhook');
   }

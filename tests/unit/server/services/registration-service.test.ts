@@ -10,12 +10,8 @@ vi.mock('@/lib/db/client', () => ({ prisma: prismaMock }));
 const auditLogMock = vi.fn();
 vi.mock('@/server/services/audit-log-service', () => ({ recordAuditLog: auditLogMock }));
 
-const sendRegistrationConfirmationEmailMock = vi.fn();
-const sendRegistrationCancellationEmailMock = vi.fn();
-vi.mock('@/lib/email/registration-confirmation', () => ({
-  sendRegistrationConfirmationEmail: sendRegistrationConfirmationEmailMock,
-  sendRegistrationCancellationEmail: sendRegistrationCancellationEmailMock,
-}));
+const enqueueEmailMock = vi.fn();
+vi.mock('@/server/services/email-queue-service', () => ({ enqueueEmail: enqueueEmailMock }));
 
 const {
   createRegistrationWithUniqueReference,
@@ -35,7 +31,7 @@ const REGISTRATION_WITH_RELATIONS = {
   status: 'CONFIRMED',
   eventId: 'evt-1',
   attendeeId: 'att-1',
-  event: { title: 'Herbal Basics' },
+  event: { title: 'Herbal Basics', startAt: new Date('2026-06-01T00:00:00Z'), city: 'Austin', state: 'TX' },
   attendee: { id: 'att-1', firstName: 'Jane', lastName: 'Doe', email: 'jane@example.com' },
 };
 
@@ -107,8 +103,13 @@ describe('resendRegistrationConfirmation', () => {
   it('resends the confirmation email and records an audit log entry', async () => {
     prismaMock.registration.findUnique.mockResolvedValue(REGISTRATION_WITH_RELATIONS);
     await resendRegistrationConfirmation('reg-1', { actorId: 'admin-1' });
-    expect(sendRegistrationConfirmationEmailMock).toHaveBeenCalledWith(
-      expect.objectContaining({ toEmail: 'jane@example.com', reference: 'HHS-2026-ABCDEF' }),
+    expect(enqueueEmailMock).toHaveBeenCalledWith(
+      prismaMock,
+      expect.objectContaining({
+        type: 'REGISTRATION_CONFIRMATION',
+        toEmail: 'jane@example.com',
+        variables: expect.objectContaining({ registrationReference: 'HHS-2026-ABCDEF' }),
+      }),
     );
     expect(auditLogMock).toHaveBeenCalledWith(
       expect.objectContaining({ actorId: 'admin-1', action: 'registration.confirmationResent', entityId: 'reg-1' }),
@@ -130,8 +131,9 @@ describe('cancelRegistration', () => {
       where: { id: 'reg-1' },
       data: { status: 'CANCELLED' },
     });
-    expect(sendRegistrationCancellationEmailMock).toHaveBeenCalledWith(
-      expect.objectContaining({ toEmail: 'jane@example.com' }),
+    expect(enqueueEmailMock).toHaveBeenCalledWith(
+      prismaMock,
+      expect.objectContaining({ type: 'REGISTRATION_CANCELLATION', toEmail: 'jane@example.com' }),
     );
     expect(auditLogMock).toHaveBeenCalledWith(
       expect.objectContaining({ actorId: 'admin-1', action: 'registration.cancelled', entityId: 'reg-1', ipAddress: '10.0.0.1' }),
@@ -186,6 +188,10 @@ describe('transferRegistration', () => {
     const newAttendee = { firstName: 'Alex', lastName: 'Smith', email: 'alex@example.com', phone: '555-0199', country: 'US' };
     await transferRegistration('reg-1', newAttendee, { actorId: 'admin-1' });
     expect(prismaMock.attendee.update).toHaveBeenCalledWith({ where: { id: 'att-1' }, data: newAttendee });
+    expect(enqueueEmailMock).toHaveBeenCalledWith(
+      prismaMock,
+      expect.objectContaining({ type: 'REGISTRATION_TRANSFER', toEmail: 'alex@example.com' }),
+    );
     expect(auditLogMock).toHaveBeenCalledWith(
       expect.objectContaining({ actorId: 'admin-1', action: 'registration.transferred', entityId: 'reg-1' }),
     );
