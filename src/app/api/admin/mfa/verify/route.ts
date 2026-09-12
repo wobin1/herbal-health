@@ -43,6 +43,7 @@ export async function POST(request: NextRequest) {
     if (error instanceof InvalidMfaError) {
       return errorResponse(401, 'INVALID_MFA_CODE', 'Invalid authentication code');
     }
+    console.error('[admin/mfa/verify] unexpected error', error);
     return errorResponse(500, 'INTERNAL_ERROR', 'Unable to process verification');
   }
 }

@@ -26,7 +26,7 @@ export function FounderBioSection({
 
   return (
     <article className="bg-primary-950">
-      <div className="relative mx-auto min-h-[560px] max-w-6xl overflow-hidden lg:min-h-[680px]">
+      <div className="relative mx-auto h-[560px] max-w-6xl overflow-hidden lg:h-[680px]">
         <span
           aria-hidden
           className="font-serif pointer-events-none absolute -bottom-10 left-0 select-none text-[22vw] font-black leading-none tracking-tight text-neutral-50/5 lg:-bottom-16 lg:text-[9rem]"

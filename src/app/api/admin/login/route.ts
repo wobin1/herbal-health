@@ -23,6 +23,7 @@ export async function POST(request: NextRequest) {
     if (error instanceof AccountLockedError) {
       return errorResponse(423, 'ACCOUNT_LOCKED', 'Account is temporarily locked');
     }
+    console.error('[admin/login] unexpected error', error);
     return errorResponse(500, 'INTERNAL_ERROR', 'Unable to process login');
   }
 }
