@@ -3,7 +3,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LockIcon, UserIcon } from '@/components/icons';
+import { useEffect, useState } from 'react';
+import { CloseIcon, LockIcon, MenuIcon, UserIcon } from '@/components/icons';
 
 const NAV_LINKS = [
   { href: '/', label: 'Home' },
@@ -15,6 +16,11 @@ const NAV_LINKS = [
 export function SiteHeader() {
   const pathname = usePathname();
   const isHome = pathname === '/';
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [pathname]);
 
   return (
     <header
@@ -39,7 +45,7 @@ export function SiteHeader() {
           </span>
         </Link>
 
-        <nav aria-label="Primary" className="order-3 w-full sm:order-none sm:w-auto">
+        <nav aria-label="Primary" className="hidden md:block">
           <ul className="flex flex-wrap items-center justify-center gap-x-2 gap-y-2 rounded-full border border-neutral-50/15 bg-neutral-50/5 px-2 py-1.5 text-sm font-medium backdrop-blur sm:gap-x-1">
             {NAV_LINKS.map((link, index) => (
               <li key={link.href} className="flex items-center gap-x-2 sm:gap-x-1">
@@ -55,7 +61,7 @@ export function SiteHeader() {
           </ul>
         </nav>
 
-        <div className="flex items-center gap-2">
+        <div className="hidden items-center gap-2 md:flex">
           <Link
             href="/contact"
             className="inline-flex items-center gap-2 rounded-full border border-neutral-50/20 px-5 py-2 text-sm font-medium transition-colors duration-fast ease-premium hover:border-neutral-50/40"
@@ -71,7 +77,57 @@ export function SiteHeader() {
             <LockIcon className="h-4 w-4" />
           </Link>
         </div>
+
+        <button
+          type="button"
+          onClick={() => setIsMenuOpen((open) => !open)}
+          aria-expanded={isMenuOpen}
+          aria-controls="mobile-nav-panel"
+          aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
+          className="flex h-10 w-10 items-center justify-center rounded-full border border-neutral-50/20 text-neutral-50 transition-colors duration-fast ease-premium hover:border-neutral-50/40 md:hidden"
+        >
+          {isMenuOpen ? <CloseIcon className="h-5 w-5" /> : <MenuIcon className="h-5 w-5" />}
+        </button>
       </div>
+
+      {isMenuOpen ? (
+        <div
+          id="mobile-nav-panel"
+          className="border-t border-neutral-50/15 bg-primary-950/98 px-6 py-4 backdrop-blur md:hidden"
+        >
+          <nav aria-label="Primary">
+            <ul className="flex flex-col gap-1 text-sm font-medium">
+              {NAV_LINKS.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="block rounded-lg px-3 py-2 transition-colors duration-fast ease-premium hover:bg-neutral-50/10 hover:text-accent-500"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          <div className="mt-4 flex flex-col gap-2 border-t border-neutral-50/15 pt-4">
+            <Link
+              href="/contact"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-neutral-50/20 px-5 py-2 text-sm font-medium transition-colors duration-fast ease-premium hover:border-neutral-50/40"
+            >
+              <UserIcon className="h-4 w-4" />
+              Contact Us
+            </Link>
+            <Link
+              href="/admin/login"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-neutral-50/20 px-5 py-2 text-sm font-medium text-neutral-50 transition-colors duration-fast ease-premium hover:border-neutral-50/40"
+            >
+              <LockIcon className="h-4 w-4" />
+              Admin login
+            </Link>
+          </div>
+        </div>
+      ) : null}
     </header>
   );
 }
