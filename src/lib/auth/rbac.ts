@@ -17,7 +17,8 @@ export type Permission =
   | 'contactMessages:manage'
   | 'users:manage'
   | 'auditLogs:view'
-  | 'settings:manage';
+  | 'settings:manage'
+  | 'gallery:manage';
 
 const ADMIN_PERMISSIONS: Permission[] = [
   'dashboard:view',
@@ -37,6 +38,7 @@ const ADMIN_PERMISSIONS: Permission[] = [
   'users:manage',
   'auditLogs:view',
   'settings:manage',
+  'gallery:manage',
 ];
 
 const CONTENT_EDITOR_PERMISSIONS: Permission[] = [
@@ -48,6 +50,7 @@ const CONTENT_EDITOR_PERMISSIONS: Permission[] = [
   'educationFocusItems:manage',
   'locations:manage',
   'contactMessages:manage',
+  'gallery:manage',
 ];
 
 const PERMISSIONS_BY_ROLE: Record<AdminRole, Permission[]> = {

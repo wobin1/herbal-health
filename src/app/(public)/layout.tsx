@@ -2,9 +2,10 @@ import { ViewTransition } from 'react';
 import { SiteHeader } from '@/components/site-header';
 import { SiteFooter } from '@/components/site-footer';
 import { getHomepageContent } from '@/server/services/content-service';
+import { getAdminSession } from '@/lib/auth/require-admin';
 
 export default async function PublicLayout({ children }: LayoutProps<'/'>) {
-  const content = await getHomepageContent();
+  const [content, session] = await Promise.all([getHomepageContent(), getAdminSession()]);
 
   return (
     <>
@@ -14,7 +15,7 @@ export default async function PublicLayout({ children }: LayoutProps<'/'>) {
       >
         Skip to main content
       </a>
-      <SiteHeader />
+      <SiteHeader isAdminLoggedIn={Boolean(session)} />
       <main id="main-content" className="flex-1">
         <ViewTransition default="none" enter="page-fade" exit="page-fade">
           {children}

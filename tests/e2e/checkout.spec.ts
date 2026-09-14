@@ -52,16 +52,13 @@ test('browse -> select ticket -> checkout -> test payment -> confirmation -> reg
   await request.post(`/api/admin/events/${event.id}/on-sale`).catch(() => null);
 
   await page.goto(`/events/${slug}`);
-  await page.getByRole('link', { name: 'Select' }).first().click();
+  await page.getByRole('button', { name: 'Buy Ticket' }).first().click();
 
   await expect(page).toHaveURL(/\/checkout\?/);
-  await page.getByLabel('First Name').fill('Jane');
-  await page.getByLabel('Last Name').fill('Doe');
-  await page.getByLabel('Attendee Email').fill('jane.doe@example.com');
-  await page.getByLabel('Phone').fill('555-0100');
-  await page.getByLabel('Country').fill('US');
   await page.getByLabel('Full Name').fill('Jane Doe');
   await page.getByLabel('Email', { exact: true }).fill('jane.doe@example.com');
+  await page.getByLabel('Phone').fill('555-0100');
+  await page.getByLabel('Country').fill('US');
   await page.getByLabel(/I have read and agree/).check();
   await page.getByRole('button', { name: 'Continue to Payment' }).click();
 
@@ -125,16 +122,13 @@ test('mock payment provider: browse -> select ticket -> checkout -> simulated pa
   await request.post(`/api/admin/events/${event.id}/on-sale`).catch(() => null);
 
   await page.goto(`/events/${slug}`);
-  await page.getByRole('link', { name: 'Select' }).first().click();
+  await page.getByRole('button', { name: 'Buy Ticket' }).first().click();
 
   await expect(page).toHaveURL(/\/checkout\?/);
-  await page.getByLabel('First Name').fill('Jane');
-  await page.getByLabel('Last Name').fill('Doe');
-  await page.getByLabel('Attendee Email').fill('jane.doe@example.com');
-  await page.getByLabel('Phone').fill('555-0100');
-  await page.getByLabel('Country').fill('US');
   await page.getByLabel('Full Name').fill('Jane Doe');
   await page.getByLabel('Email', { exact: true }).fill('jane.doe@example.com');
+  await page.getByLabel('Phone').fill('555-0100');
+  await page.getByLabel('Country').fill('US');
   await page.getByLabel(/I have read and agree/).check();
   await page.getByRole('button', { name: 'Continue to Payment' }).click();
 

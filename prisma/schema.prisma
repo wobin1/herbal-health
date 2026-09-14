@@ -111,6 +111,18 @@ model EducationalFocusItem {
   @@index([published, sortOrder])
 }
 
+model GalleryImage {
+  id        String   @id @default(cuid())
+  url       String
+  caption   String?
+  sortOrder Int      @default(0)
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([published, sortOrder])
+}
+
 model Instructor {
   id          String   @id @default(cuid())
   slug        String   @unique
@@ -282,6 +294,8 @@ model Order {
   currency                String      @default("USD")
   buyerEmail              String
   buyerName               String
+  buyerPhone              String
+  buyerCountry            String
   reservationExpiresAt    DateTime?
   stripeCheckoutSessionId String?     @unique
   createdAt               DateTime    @default(now())
@@ -325,8 +339,6 @@ model Attendee {
   email              String
   phone              String
   country            String
-  organization       String?
-  accessibilityNotes String?
   internalNotes      String?
   attendedAt         DateTime?
   createdAt          DateTime  @default(now())

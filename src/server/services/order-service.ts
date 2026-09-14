@@ -12,6 +12,16 @@ export class OrderNotFoundError extends Error {}
 /** Reservations expire after this window if payment isn't completed. */
 export const RESERVATION_WINDOW_MINUTES = 15;
 
+/** Splits a single "full name" field into first/last for the Attendee record. */
+function splitName(fullName: string): { firstName: string; lastName: string } {
+  const trimmed = fullName.trim();
+  const spaceIndex = trimmed.indexOf(' ');
+  if (spaceIndex === -1) {
+    return { firstName: trimmed, lastName: trimmed };
+  }
+  return { firstName: trimmed.slice(0, spaceIndex), lastName: trimmed.slice(spaceIndex + 1) };
+}
+
 export interface CreatePendingOrderActor {
   ipAddress?: string | null;
 }
@@ -53,6 +63,8 @@ export async function createPendingOrder(
         currency: ticketType.currency,
         buyerEmail: input.buyerEmail,
         buyerName: input.buyerName,
+        buyerPhone: input.buyerPhone,
+        buyerCountry: input.buyerCountry,
         reservationExpiresAt,
         items: {
           create: {
@@ -73,17 +85,16 @@ export async function createPendingOrder(
     });
 
     const orderItem = order.items[0];
+    const { firstName, lastName } = splitName(input.buyerName);
     await tx.attendee.createMany({
-      data: input.attendees.map((attendee) => ({
+      data: Array.from({ length: input.quantity }, () => ({
         orderId: order.id,
         orderItemId: orderItem.id,
-        firstName: attendee.firstName,
-        lastName: attendee.lastName,
-        email: attendee.email,
-        phone: attendee.phone,
-        country: attendee.country,
-        organization: attendee.organization ?? null,
-        accessibilityNotes: attendee.accessibilityNotes ?? null,
+        firstName,
+        lastName,
+        email: input.buyerEmail,
+        phone: input.buyerPhone,
+        country: input.buyerCountry,
       })),
     });
 

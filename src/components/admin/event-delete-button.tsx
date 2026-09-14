@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useConfirm } from '@/components/confirm-dialog';
 import { ButtonSpinner } from '@/components/admin/ui';
+import { toastError, toastSuccess } from '@/components/toast/use-toast';
 
 export function EventDeleteButton({ eventId }: { eventId: string }) {
   const router = useRouter();
@@ -19,9 +20,12 @@ export function EventDeleteButton({ eventId }: { eventId: string }) {
       const response = await fetch(`/api/admin/events/${eventId}`, { method: 'DELETE' });
       if (!response.ok) {
         const data = await response.json().catch(() => null);
-        setError(data?.error?.message ?? 'Unable to delete event');
+        const message = data?.error?.message ?? 'Unable to delete event';
+        setError(message);
+        toastError('Delete failed', message);
         return;
       }
+      toastSuccess('Event deleted');
       router.refresh();
     } finally {
       setDeleting(false);

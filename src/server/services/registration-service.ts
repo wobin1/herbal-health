@@ -171,8 +171,6 @@ export interface TransferAttendeeDetails {
   email: string;
   phone: string;
   country: string;
-  organization?: string | null;
-  accessibilityNotes?: string | null;
 }
 
 /** Admin action: transfer a registration's ticket to a different attendee. */

@@ -18,6 +18,7 @@ import {
   thClassName,
   trClassName,
 } from '@/components/admin/ui';
+import { toastError, toastSuccess } from '@/components/toast/use-toast';
 
 export interface InstructorRow {
   id: string;
@@ -68,7 +69,9 @@ export function InstructorManager({
     const response = await fetch(`/api/admin/instructors/${instructor.id}`);
     const data = await response.json();
     if (!response.ok) {
-      setError(data.error?.message ?? 'Unable to load instructor');
+      const message = data.error?.message ?? 'Unable to load instructor';
+      setError(message);
+      toastError('Unable to load instructor', message);
       return;
     }
     setForm({
@@ -97,10 +100,13 @@ export function InstructorManager({
       );
       const data = await response.json();
       if (!response.ok) {
-        setError(data.error?.message ?? 'Unable to save instructor');
+        const message = data.error?.message ?? 'Unable to save instructor';
+        setError(message);
+        toastError('Unable to save instructor', message);
         return;
       }
       setIsOpen(false);
+      toastSuccess('Instructor saved');
       router.refresh();
     } finally {
       setSubmitting(false);
@@ -113,12 +119,15 @@ export function InstructorManager({
     const response = await fetch(`/api/admin/instructors/${id}`, { method: 'DELETE' });
     if (!response.ok) {
       const data = await response.json().catch(() => null);
-      setError(data?.error?.message ?? 'Unable to delete instructor');
+      const message = data?.error?.message ?? 'Unable to delete instructor';
+      setError(message);
+      toastError('Unable to delete instructor', message);
       return;
     }
     if (form.id === id) {
       setIsOpen(false);
     }
+    toastSuccess('Instructor removed');
     router.refresh();
   }
 

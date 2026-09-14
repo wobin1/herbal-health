@@ -18,6 +18,7 @@ import {
   thClassName,
   trClassName,
 } from '@/components/admin/ui';
+import { toastError, toastSuccess } from '@/components/toast/use-toast';
 
 export interface LocationRow {
   id: string;
@@ -27,6 +28,7 @@ export interface LocationRow {
   state: string;
   postalCode: string | null;
   country: string;
+  mapUrl: string | null;
 }
 
 type FormState = {
@@ -37,9 +39,10 @@ type FormState = {
   state: string;
   postalCode: string;
   country: string;
+  mapUrl: string;
 };
 
-const EMPTY: FormState = { id: null, name: '', address: '', city: '', state: '', postalCode: '', country: 'US' };
+const EMPTY: FormState = { id: null, name: '', address: '', city: '', state: '', postalCode: '', country: 'US', mapUrl: '' };
 
 export function LocationManager({
   locations,
@@ -77,6 +80,7 @@ export function LocationManager({
       state: location.state,
       postalCode: location.postalCode ?? '',
       country: location.country,
+      mapUrl: location.mapUrl ?? '',
     });
     setIsOpen(true);
   }
@@ -93,6 +97,7 @@ export function LocationManager({
         state: form.state,
         postalCode: form.postalCode || null,
         country: form.country,
+        mapUrl: form.mapUrl || null,
       };
       const response = await fetch(
         isEditing ? `/api/admin/locations/${form.id}` : '/api/admin/locations',
@@ -104,10 +109,13 @@ export function LocationManager({
       );
       const data = await response.json();
       if (!response.ok) {
-        setError(data.error?.message ?? 'Unable to save location');
+        const message = data.error?.message ?? 'Unable to save location';
+        setError(message);
+        toastError('Unable to save location', message);
         return;
       }
       setIsOpen(false);
+      toastSuccess('Location saved');
       router.refresh();
     } finally {
       setSubmitting(false);
@@ -120,12 +128,15 @@ export function LocationManager({
     const response = await fetch(`/api/admin/locations/${id}`, { method: 'DELETE' });
     if (!response.ok) {
       const data = await response.json().catch(() => null);
-      setError(data?.error?.message ?? 'Unable to delete location');
+      const message = data?.error?.message ?? 'Unable to delete location';
+      setError(message);
+      toastError('Unable to delete location', message);
       return;
     }
     if (form.id === id) {
       setIsOpen(false);
     }
+    toastSuccess('Location deleted');
     router.refresh();
   }
 
@@ -230,6 +241,11 @@ export function LocationManager({
           <LabeledInput label="State" value={form.state} onChange={(v) => setForm((f) => ({ ...f, state: v }))} required />
           <LabeledInput label="Postal Code" value={form.postalCode} onChange={(v) => setForm((f) => ({ ...f, postalCode: v }))} />
           <LabeledInput label="Country" value={form.country} onChange={(v) => setForm((f) => ({ ...f, country: v }))} required />
+          <LabeledInput
+            label="Location Link (Google Maps URL)"
+            value={form.mapUrl}
+            onChange={(v) => setForm((f) => ({ ...f, mapUrl: v }))}
+          />
           <div className="flex gap-3 sm:col-span-3">
             <button
               type="submit"

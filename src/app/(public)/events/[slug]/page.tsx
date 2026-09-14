@@ -1,8 +1,8 @@
 import { notFound } from 'next/navigation';
-import Link from 'next/link';
 import type { Metadata } from 'next';
 import { getPublicEventBySlug } from '@/server/services/event-service';
 import { getEventStatusCta } from '@/lib/events/status-cta';
+import { TicketSelector } from '@/components/ticket-selector';
 
 const EVENT_DATE_FORMATTER = new Intl.DateTimeFormat('en-US', {
   dateStyle: 'full',
@@ -92,6 +92,33 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
         </p>
       )}
 
+      {event.location ? (
+        <section className="mt-6" aria-labelledby="map-heading">
+          <h2 id="map-heading" className="sr-only">
+            Venue map
+          </h2>
+          <iframe
+            title={`Map showing ${event.location.name}`}
+            src={`https://www.google.com/maps?q=${encodeURIComponent(
+              `${event.location.address}, ${event.location.city}, ${event.location.state} ${event.location.postalCode ?? ''}`,
+            )}&output=embed`}
+            className="h-80 w-full rounded-lg border border-neutral-200"
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+          />
+          {event.location.mapUrl ? (
+            <a
+              href={event.location.mapUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 inline-block text-sm font-medium text-primary-950 underline-offset-2 hover:underline"
+            >
+              Open in Google Maps
+            </a>
+          ) : null}
+        </section>
+      ) : null}
+
       {event.longDescription ? (
         <div className="mt-8 space-y-4 text-neutral-600">
           {event.longDescription.split(/\n{2,}/).map((paragraph, index) => (
@@ -131,27 +158,25 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
           <h2 id="tickets-heading" className="text-xl font-semibold text-neutral-900">
             Tickets
           </h2>
-          <ul className="mt-3 space-y-2 text-neutral-600">
-            {event.ticketTypes.map((ticket) => (
-              <li key={ticket.id} className="flex items-center justify-between gap-4">
-                <span>
-                  {ticket.name} —{' '}
-                  {(ticket.priceMinorUnits / 100).toLocaleString('en-US', {
-                    style: 'currency',
-                    currency: ticket.currency,
-                  })}
-                </span>
-                {event.status === 'ON_SALE' ? (
-                  <Link
-                    href={`/checkout?eventId=${event.id}&ticketTypeId=${ticket.id}`}
-                    className="inline-block rounded-full bg-primary-950 px-4 py-2 text-sm font-medium text-neutral-50"
-                  >
-                    Select
-                  </Link>
-                ) : null}
-              </li>
-            ))}
-          </ul>
+          <div className="mt-3 text-neutral-600">
+            {event.status === 'ON_SALE' ? (
+              <TicketSelector eventId={event.id} tickets={event.ticketTypes} />
+            ) : (
+              <ul className="space-y-2">
+                {event.ticketTypes.map((ticket) => (
+                  <li key={ticket.id} className="flex items-center justify-between gap-4">
+                    <span>
+                      {ticket.name} —{' '}
+                      {(ticket.priceMinorUnits / 100).toLocaleString('en-US', {
+                        style: 'currency',
+                        currency: ticket.currency,
+                      })}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </section>
       ) : null}
 

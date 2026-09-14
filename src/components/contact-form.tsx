@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
+import { toastError, toastSuccess } from '@/components/toast/use-toast';
 
 type Status = 'idle' | 'submitting' | 'success' | 'error';
 
@@ -30,8 +31,10 @@ export function ContactForm() {
 
       setStatus('success');
       form.reset();
+      toastSuccess('Message sent', 'Our team will get back to you within two business days.');
     } catch {
       setStatus('error');
+      toastError('Message not sent', 'Please check your connection and try again.');
     }
   }
 

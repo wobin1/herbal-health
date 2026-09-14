@@ -1,6 +1,14 @@
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowUpRightIcon, ChevronDownIcon } from '@/components/icons';
+
+function scrollToNextSection(event: React.MouseEvent<HTMLButtonElement>) {
+  const section = event.currentTarget.closest('section');
+  const nextSection = section?.nextElementSibling;
+  nextSection?.scrollIntoView({ behavior: 'smooth' });
+}
 
 export function HomepageHero({
   eyebrow,
@@ -75,11 +83,14 @@ export function HomepageHero({
         </div>
       </div>
 
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2">
-        <span className="flex h-14 w-14 items-center justify-center rounded-full border border-neutral-50/40 bg-neutral-50/10 text-neutral-50 backdrop-blur">
-          <ChevronDownIcon className="h-5 w-5" />
-        </span>
-      </div>
+      <button
+        type="button"
+        onClick={scrollToNextSection}
+        aria-label="Scroll to next section"
+        className="absolute bottom-6 left-1/2 flex h-14 w-14 -translate-x-1/2 items-center justify-center rounded-full border border-neutral-50/40 bg-neutral-50/10 text-neutral-50 backdrop-blur transition-colors duration-base ease-premium hover:bg-neutral-50/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-50"
+      >
+        <ChevronDownIcon className="h-5 w-5" />
+      </button>
     </section>
   );
 }

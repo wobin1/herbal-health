@@ -9,12 +9,14 @@ import { CloseIcon, LockIcon, MenuIcon, UserIcon } from '@/components/icons';
 const NAV_LINKS = [
   { href: '/', label: 'Home' },
   { href: '/events', label: 'Events' },
+  { href: '/gallery', label: 'Gallery' },
   { href: '/about', label: 'About' },
   { href: '/faq', label: 'FAQ' },
 ];
 
-export function SiteHeader() {
+export function SiteHeader({ isAdminLoggedIn = false }: { isAdminLoggedIn?: boolean }) {
   const pathname = usePathname();
+  const adminHref = isAdminLoggedIn ? '/admin/events' : '/admin/login';
   const isHome = pathname === '/';
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [lastPathname, setLastPathname] = useState(pathname);
@@ -72,8 +74,8 @@ export function SiteHeader() {
             Contact Us
           </Link>
           <Link
-            href="/admin/login"
-            aria-label="Admin login"
+            href={adminHref}
+            aria-label={isAdminLoggedIn ? 'Go to admin dashboard' : 'Admin login'}
             className="flex h-10 w-10 items-center justify-center rounded-full border border-neutral-50/20 text-neutral-50 transition-colors duration-fast ease-premium hover:border-neutral-50/40"
           >
             <LockIcon className="h-4 w-4" />
@@ -121,11 +123,11 @@ export function SiteHeader() {
               Contact Us
             </Link>
             <Link
-              href="/admin/login"
+              href={adminHref}
               className="inline-flex items-center justify-center gap-2 rounded-full border border-neutral-50/20 px-5 py-2 text-sm font-medium text-neutral-50 transition-colors duration-fast ease-premium hover:border-neutral-50/40"
             >
               <LockIcon className="h-4 w-4" />
-              Admin login
+              {isAdminLoggedIn ? 'Admin dashboard' : 'Admin login'}
             </Link>
           </div>
         </div>

@@ -7,6 +7,9 @@ import { useConfirm } from '@/components/confirm-dialog';
 import { PaginationControls } from '@/components/admin/pagination-controls';
 import { BookOpenIcon } from '@/components/admin/icons';
 import { AdminModal } from '@/components/admin/admin-modal';
+import { ImageUploadField } from '@/components/admin/image-upload-field';
+import { isAllowedImageUrl } from '@/lib/image-hosts';
+import { toastError, toastSuccess } from '@/components/toast/use-toast';
 import {
   ButtonSpinner,
   EmptyState,
@@ -62,7 +65,6 @@ export function EducationFocusItemManager({
   const [form, setForm] = useState<FormState>(EMPTY);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
   const isEditing = form.id !== null;
@@ -91,24 +93,6 @@ export function EducationFocusItemManager({
     setIsOpen(true);
   }
 
-  async function handleUpload(file: File) {
-    setUploading(true);
-    setError(null);
-    try {
-      const body = new FormData();
-      body.set('file', file);
-      const response = await fetch('/api/admin/uploads', { method: 'POST', body });
-      const data = await response.json();
-      if (!response.ok) {
-        setError(data.error?.message ?? 'Unable to upload image');
-        return;
-      }
-      setForm((f) => ({ ...f, imageUrl: data.url }));
-    } finally {
-      setUploading(false);
-    }
-  }
-
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     setSubmitting(true);
@@ -132,10 +116,13 @@ export function EducationFocusItemManager({
       );
       const data = await response.json();
       if (!response.ok) {
-        setError(data.error?.message ?? 'Unable to save item');
+        const message = data.error?.message ?? 'Unable to save item';
+        setError(message);
+        toastError('Unable to save item', message);
         return;
       }
       setIsOpen(false);
+      toastSuccess('Item saved');
       router.refresh();
     } finally {
       setSubmitting(false);
@@ -148,12 +135,15 @@ export function EducationFocusItemManager({
     const response = await fetch(`/api/admin/education-focus-items/${id}`, { method: 'DELETE' });
     if (!response.ok) {
       const data = await response.json().catch(() => null);
-      setError(data?.error?.message ?? 'Unable to delete item');
+      const message = data?.error?.message ?? 'Unable to delete item';
+      setError(message);
+      toastError('Unable to delete item', message);
       return;
     }
     if (form.id === id) {
       setIsOpen(false);
     }
+    toastSuccess('Item deleted');
     router.refresh();
   }
 
@@ -166,9 +156,12 @@ export function EducationFocusItemManager({
     });
     if (!response.ok) {
       const data = await response.json().catch(() => null);
-      setError(data?.error?.message ?? 'Unable to update item');
+      const message = data?.error?.message ?? 'Unable to update item';
+      setError(message);
+      toastError('Unable to update item', message);
       return;
     }
+    toastSuccess(item.published ? 'Item set to draft' : 'Item published');
     router.refresh();
   }
 
@@ -211,7 +204,12 @@ export function EducationFocusItemManager({
                   <td className={tdClassName}>
                     {item.imageUrl ? (
                       <div className="relative h-12 w-16 overflow-hidden rounded-md bg-neutral-100">
-                        <Image src={item.imageUrl} alt="" fill className="object-cover" />
+                        {isAllowedImageUrl(item.imageUrl) ? (
+                          <Image src={item.imageUrl} alt="" fill className="object-cover" />
+                        ) : (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={item.imageUrl} alt="" className="h-full w-full object-cover" />
+                        )}
                       </div>
                     ) : (
                       <div className="h-12 w-16 rounded-md bg-neutral-100" aria-hidden="true" />
@@ -296,40 +294,12 @@ export function EducationFocusItemManager({
             required
           />
           <div className="sm:col-span-2">
-            <label htmlFor="focus-item-image" className="block text-sm font-medium text-neutral-900">
-              Image
-            </label>
-            <input
-              id="focus-item-image"
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) void handleUpload(file);
-              }}
-              className="mt-1 block text-sm"
+            <ImageUploadField
+              label="Image"
+              value={form.imageUrl || null}
+              onChange={(url) => setForm((f) => ({ ...f, imageUrl: url ?? '' }))}
+              folder="focus-items"
             />
-            {uploading ? (
-              <p className="mt-1 flex items-center gap-2 text-xs text-neutral-500">
-                <ButtonSpinner className="h-3.5 w-3.5" />
-                Uploading…
-              </p>
-            ) : null}
-            <label htmlFor="focus-item-image-url" className="mt-3 block text-sm font-medium text-neutral-900">
-              Or paste an image URL
-            </label>
-            <input
-              id="focus-item-image-url"
-              type="text"
-              value={form.imageUrl}
-              onChange={(e) => setForm((f) => ({ ...f, imageUrl: e.target.value }))}
-              className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm transition-colors focus:border-primary-950 focus:outline-none focus:ring-2 focus:ring-primary-950/30"
-            />
-            {form.imageUrl ? (
-              <div className="relative mt-3 h-28 w-40 overflow-hidden rounded-md bg-neutral-100">
-                <Image src={form.imageUrl} alt="" fill className="object-cover" />
-              </div>
-            ) : null}
           </div>
           <div className="flex items-center gap-2">
             <input

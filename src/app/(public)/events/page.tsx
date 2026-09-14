@@ -159,17 +159,19 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
                     </span>
                   </div>
                   <div className="flex flex-1 flex-col p-6">
-                    <h2 className="text-lg font-semibold text-neutral-900">{event.title}</h2>
-                    <p className="mt-1 text-sm text-neutral-600">
-                      {event.city}, {event.state}
-                    </p>
-                    {startingPrice || capacity > 0 ? (
-                      <p className="mt-3 text-sm font-medium text-neutral-900">
-                        {startingPrice}
-                        {startingPrice && capacity > 0 ? ' · ' : ''}
-                        {capacity > 0 ? `${capacity} seats` : ''}
+                    <div className="flex-1">
+                      <h2 className="text-lg font-semibold text-neutral-900">{event.title}</h2>
+                      <p className="mt-1 text-sm text-neutral-600">
+                        {event.city}, {event.state}
                       </p>
-                    ) : null}
+                      {startingPrice || capacity > 0 ? (
+                        <p className="mt-3 text-sm font-medium text-neutral-900">
+                          {startingPrice}
+                          {startingPrice && capacity > 0 ? ' · ' : ''}
+                          {capacity > 0 ? `${capacity} seats` : ''}
+                        </p>
+                      ) : null}
+                    </div>
                     {cta.label ? (
                       <Link
                         href={`/events/${event.slug}`}

@@ -11,8 +11,6 @@ export const transferAttendeeSchema = z.object({
   email: z.string().trim().email().max(320),
   phone: z.string().trim().min(3).max(50),
   country: z.string().trim().min(2).max(100),
-  organization: z.string().trim().max(200).optional().nullable(),
-  accessibilityNotes: z.string().trim().max(1000).optional().nullable(),
 });
 
 export type TransferAttendeeInput = z.infer<typeof transferAttendeeSchema>;

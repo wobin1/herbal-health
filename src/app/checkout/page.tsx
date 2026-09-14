@@ -5,27 +5,8 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ButtonSpinner } from '@/components/icons';
 
-interface AttendeeFormState {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  country: string;
-  organization: string;
-  accessibilityNotes: string;
-}
-
-const EMPTY_ATTENDEE: AttendeeFormState = {
-  firstName: '',
-  lastName: '',
-  email: '',
-  phone: '',
-  country: '',
-  organization: '',
-  accessibilityNotes: '',
-};
-
 const TERMS_VERSION = '2026-01-01';
+const MAX_QUANTITY = 10;
 
 export default function CheckoutPage() {
   return (
@@ -40,9 +21,11 @@ function CheckoutForm() {
   const eventId = searchParams.get('eventId') ?? '';
   const ticketTypeId = searchParams.get('ticketTypeId') ?? '';
 
-  const [attendee, setAttendee] = useState<AttendeeFormState>(EMPTY_ATTENDEE);
-  const [buyerEmail, setBuyerEmail] = useState('');
+  const [quantity, setQuantity] = useState(1);
   const [buyerName, setBuyerName] = useState('');
+  const [buyerEmail, setBuyerEmail] = useState('');
+  const [buyerPhone, setBuyerPhone] = useState('');
+  const [buyerCountry, setBuyerCountry] = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -72,20 +55,11 @@ function CheckoutForm() {
         body: JSON.stringify({
           eventId,
           ticketTypeId,
-          quantity: 1,
-          attendees: [
-            {
-              firstName: attendee.firstName,
-              lastName: attendee.lastName,
-              email: attendee.email,
-              phone: attendee.phone,
-              country: attendee.country,
-              organization: attendee.organization || undefined,
-              accessibilityNotes: attendee.accessibilityNotes || undefined,
-            },
-          ],
+          quantity,
           buyerEmail,
           buyerName,
+          buyerPhone,
+          buyerCountry,
           termsVersion: TERMS_VERSION,
         }),
       });
@@ -110,101 +84,8 @@ function CheckoutForm() {
       <h1 className="text-2xl font-semibold text-neutral-900">Checkout</h1>
       <form onSubmit={handleSubmit} className="mt-8 space-y-6" noValidate>
         <fieldset className="space-y-4">
-          <legend className="text-lg font-medium text-neutral-900">Attendee Details</legend>
-
-          <div>
-            <label htmlFor="firstName" className="block text-sm font-medium text-neutral-700">
-              First Name
-            </label>
-            <input
-              id="firstName"
-              required
-              value={attendee.firstName}
-              onChange={(e) => setAttendee({ ...attendee, firstName: e.target.value })}
-              className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 transition-colors duration-fast ease-premium focus:border-primary-950 focus:outline-none focus:ring-2 focus:ring-primary-950/30"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="lastName" className="block text-sm font-medium text-neutral-700">
-              Last Name
-            </label>
-            <input
-              id="lastName"
-              required
-              value={attendee.lastName}
-              onChange={(e) => setAttendee({ ...attendee, lastName: e.target.value })}
-              className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 transition-colors duration-fast ease-premium focus:border-primary-950 focus:outline-none focus:ring-2 focus:ring-primary-950/30"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="attendeeEmail" className="block text-sm font-medium text-neutral-700">
-              Attendee Email
-            </label>
-            <input
-              id="attendeeEmail"
-              type="email"
-              required
-              value={attendee.email}
-              onChange={(e) => setAttendee({ ...attendee, email: e.target.value })}
-              className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 transition-colors duration-fast ease-premium focus:border-primary-950 focus:outline-none focus:ring-2 focus:ring-primary-950/30"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-neutral-700">
-              Phone
-            </label>
-            <input
-              id="phone"
-              required
-              value={attendee.phone}
-              onChange={(e) => setAttendee({ ...attendee, phone: e.target.value })}
-              className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 transition-colors duration-fast ease-premium focus:border-primary-950 focus:outline-none focus:ring-2 focus:ring-primary-950/30"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="country" className="block text-sm font-medium text-neutral-700">
-              Country
-            </label>
-            <input
-              id="country"
-              required
-              value={attendee.country}
-              onChange={(e) => setAttendee({ ...attendee, country: e.target.value })}
-              className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 transition-colors duration-fast ease-premium focus:border-primary-950 focus:outline-none focus:ring-2 focus:ring-primary-950/30"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="organization" className="block text-sm font-medium text-neutral-700">
-              Organization (optional)
-            </label>
-            <input
-              id="organization"
-              value={attendee.organization}
-              onChange={(e) => setAttendee({ ...attendee, organization: e.target.value })}
-              className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 transition-colors duration-fast ease-premium focus:border-primary-950 focus:outline-none focus:ring-2 focus:ring-primary-950/30"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="accessibilityNotes" className="block text-sm font-medium text-neutral-700">
-              Accessibility Notes (optional)
-            </label>
-            <textarea
-              id="accessibilityNotes"
-              value={attendee.accessibilityNotes}
-              onChange={(e) => setAttendee({ ...attendee, accessibilityNotes: e.target.value })}
-              className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 transition-colors duration-fast ease-premium focus:border-primary-950 focus:outline-none focus:ring-2 focus:ring-primary-950/30"
-            />
-          </div>
-        </fieldset>
-
-        <fieldset className="space-y-4">
           <legend className="text-lg font-medium text-neutral-900">Buyer Details</legend>
+
           <div>
             <label htmlFor="buyerName" className="block text-sm font-medium text-neutral-700">
               Full Name
@@ -217,6 +98,7 @@ function CheckoutForm() {
               className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 transition-colors duration-fast ease-premium focus:border-primary-950 focus:outline-none focus:ring-2 focus:ring-primary-950/30"
             />
           </div>
+
           <div>
             <label htmlFor="buyerEmail" className="block text-sm font-medium text-neutral-700">
               Email
@@ -229,6 +111,54 @@ function CheckoutForm() {
               onChange={(e) => setBuyerEmail(e.target.value)}
               className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 transition-colors duration-fast ease-premium focus:border-primary-950 focus:outline-none focus:ring-2 focus:ring-primary-950/30"
             />
+          </div>
+
+          <div>
+            <label htmlFor="buyerPhone" className="block text-sm font-medium text-neutral-700">
+              Phone
+            </label>
+            <input
+              id="buyerPhone"
+              required
+              value={buyerPhone}
+              onChange={(e) => setBuyerPhone(e.target.value)}
+              className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 transition-colors duration-fast ease-premium focus:border-primary-950 focus:outline-none focus:ring-2 focus:ring-primary-950/30"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="buyerCountry" className="block text-sm font-medium text-neutral-700">
+              Country
+            </label>
+            <input
+              id="buyerCountry"
+              required
+              value={buyerCountry}
+              onChange={(e) => setBuyerCountry(e.target.value)}
+              className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 transition-colors duration-fast ease-premium focus:border-primary-950 focus:outline-none focus:ring-2 focus:ring-primary-950/30"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="quantity" className="block text-sm font-medium text-neutral-700">
+              Number of Tickets
+            </label>
+            <input
+              id="quantity"
+              type="number"
+              min={1}
+              max={MAX_QUANTITY}
+              required
+              value={quantity}
+              onChange={(e) => {
+                const next = Number(e.target.value);
+                if (Number.isFinite(next)) {
+                  setQuantity(Math.min(MAX_QUANTITY, Math.max(1, Math.trunc(next))));
+                }
+              }}
+              className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 transition-colors duration-fast ease-premium focus:border-primary-950 focus:outline-none focus:ring-2 focus:ring-primary-950/30"
+            />
+            <p className="mt-1 text-sm text-neutral-500">All tickets are registered under your details above.</p>
           </div>
         </fieldset>
 

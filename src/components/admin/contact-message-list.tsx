@@ -6,6 +6,7 @@ import { useConfirm } from '@/components/confirm-dialog';
 import { PaginationControls } from '@/components/admin/pagination-controls';
 import { InboxIcon } from '@/components/admin/icons';
 import { EmptyState } from '@/components/admin/ui';
+import { toastError, toastSuccess } from '@/components/toast/use-toast';
 
 export interface ContactMessageRow {
   id: string;
@@ -41,7 +42,9 @@ export function ContactMessageList({
     const response = await fetch(`/api/admin/contact-messages/${id}`, { method: 'PATCH' });
     if (!response.ok) {
       const data = await response.json().catch(() => null);
-      setError(data?.error?.message ?? 'Unable to update message');
+      const message = data?.error?.message ?? 'Unable to update message';
+      setError(message);
+      toastError('Unable to update message', message);
       return;
     }
     router.refresh();
@@ -53,9 +56,12 @@ export function ContactMessageList({
     const response = await fetch(`/api/admin/contact-messages/${id}`, { method: 'DELETE' });
     if (!response.ok) {
       const data = await response.json().catch(() => null);
-      setError(data?.error?.message ?? 'Unable to delete message');
+      const message = data?.error?.message ?? 'Unable to delete message';
+      setError(message);
+      toastError('Unable to delete message', message);
       return;
     }
+    toastSuccess('Message deleted');
     router.refresh();
   }
 

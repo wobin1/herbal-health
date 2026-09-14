@@ -8,6 +8,8 @@ import type { SVGProps } from 'react';
 import {
   BookOpenIcon,
   CalendarIcon,
+  ExternalLinkIcon,
+  ImageIcon,
   LogOutIcon,
   MailIcon,
   MapPinIcon,
@@ -30,6 +32,7 @@ const NAV_LINKS: NavLink[] = [
   { href: '/admin/locations', label: 'Locations', icon: MapPinIcon },
   { href: '/admin/instructors', label: 'Instructors', icon: UsersIcon },
   { href: '/admin/education-focus-items', label: "What You'll Learn", icon: BookOpenIcon },
+  { href: '/admin/gallery', label: 'Gallery', icon: ImageIcon },
   { href: '/admin/contact-messages', label: 'Contact Messages', icon: MailIcon },
 ];
 
@@ -115,6 +118,15 @@ export function AdminSidebar({ email }: { email: string }) {
 
   const accountFooter = (
     <div className="border-t border-neutral-50/10 px-3 py-3">
+      <a
+        href="/"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-neutral-50/75 transition-colors duration-fast ease-premium hover:bg-neutral-50/10 hover:text-neutral-50"
+      >
+        <ExternalLinkIcon className="h-5 w-5 shrink-0 text-neutral-50/60" />
+        View website
+      </a>
       <div className="mb-2 truncate px-3 text-xs text-neutral-50/60">{email}</div>
       <button
         type="button"

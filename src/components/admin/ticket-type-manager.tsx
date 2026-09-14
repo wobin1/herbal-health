@@ -17,6 +17,7 @@ import {
   trClassName,
 } from '@/components/admin/ui';
 import { ReceiptIcon } from '@/components/admin/icons';
+import { toastError, toastSuccess } from '@/components/toast/use-toast';
 
 export interface TicketTypeRow {
   id: string;
@@ -80,10 +81,13 @@ export function TicketTypeManager({ eventId, ticketTypes }: { eventId: string; t
       });
       const data = await response.json();
       if (!response.ok) {
-        setError(data.error?.message ?? 'Unable to save ticket type');
+        const message = data.error?.message ?? 'Unable to save ticket type';
+        setError(message);
+        toastError('Unable to save ticket type', message);
         return;
       }
       resetForm();
+      toastSuccess('Ticket type saved');
       router.refresh();
     } finally {
       setSubmitting(false);
@@ -97,10 +101,13 @@ export function TicketTypeManager({ eventId, ticketTypes }: { eventId: string; t
       const response = await fetch(`/api/admin/events/${eventId}/ticket-types/${id}`, { method: 'DELETE' });
       if (!response.ok) {
         const data = await response.json().catch(() => null);
-        setError(data?.error?.message ?? 'Unable to delete ticket type');
+        const message = data?.error?.message ?? 'Unable to delete ticket type';
+        setError(message);
+        toastError('Unable to delete ticket type', message);
         return;
       }
       if (editingId === id) resetForm();
+      toastSuccess('Ticket type deleted');
       router.refresh();
     } finally {
       setSubmitting(false);

@@ -21,21 +21,14 @@ const {
 } = await import('@/server/services/order-service');
 const { InsufficientInventoryError } = await import('@/server/services/inventory-service');
 
-const ATTENDEE = {
-  firstName: 'Jane',
-  lastName: 'Doe',
-  email: 'jane@example.com',
-  phone: '555-0100',
-  country: 'US',
-};
-
 const BASE_REQUEST = {
   eventId: 'evt-1',
   ticketTypeId: 'tt-1',
   quantity: 1,
-  attendees: [ATTENDEE],
   buyerEmail: 'jane@example.com',
   buyerName: 'Jane Doe',
+  buyerPhone: '555-0100',
+  buyerCountry: 'US',
   termsVersion: '2026-01-01',
 };
 
@@ -73,10 +66,7 @@ describe('createPendingOrder', () => {
     });
     prismaMock.$transaction.mockImplementation(async (fn) => fn(tx));
 
-    await createPendingOrder(
-      { ...BASE_REQUEST, quantity: 2, attendees: [ATTENDEE, ATTENDEE] } as never,
-      { ipAddress: '127.0.0.1' },
-    );
+    await createPendingOrder({ ...BASE_REQUEST, quantity: 2 } as never, { ipAddress: '127.0.0.1' });
 
     expect(tx.order.create).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -86,6 +76,39 @@ describe('createPendingOrder', () => {
         }),
       }),
     );
+  });
+
+  it('creates one Attendee/registration-eligible row per ticket, populated from the buyer — no separate per-attendee form', async () => {
+    const tx = makeTx({
+      id: 'tt-1',
+      eventId: 'evt-1',
+      priceMinorUnits: 5000,
+      currency: 'USD',
+      capacity: 10,
+      reservedCount: 0,
+      soldCount: 0,
+      event: { status: 'ON_SALE' },
+    });
+    prismaMock.$transaction.mockImplementation(async (fn) => fn(tx));
+
+    await createPendingOrder({ ...BASE_REQUEST, quantity: 3 } as never, { ipAddress: '127.0.0.1' });
+
+    expect(tx.attendee.createMany).toHaveBeenCalledWith({
+      data: [
+        expect.objectContaining({
+          orderId: 'order-1',
+          orderItemId: 'item-1',
+          firstName: 'Jane',
+          lastName: 'Doe',
+          email: 'jane@example.com',
+          phone: '555-0100',
+          country: 'US',
+        }),
+        expect.objectContaining({ orderId: 'order-1', orderItemId: 'item-1' }),
+        expect.objectContaining({ orderId: 'order-1', orderItemId: 'item-1' }),
+      ],
+    });
+    expect((tx.attendee.createMany as ReturnType<typeof vi.fn>).mock.calls[0][0].data).toHaveLength(3);
   });
 
   it('throws TicketTypeNotFoundError when the ticket type does not belong to the event', async () => {

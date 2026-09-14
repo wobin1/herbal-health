@@ -253,6 +253,17 @@ async function main() {
     },
   });
 
+  const galleryImages = [
+    { url: 'https://picsum.photos/id/1015/1200/900', caption: 'Botanical garden field trip', sortOrder: 1 },
+    { url: 'https://picsum.photos/id/1025/1200/900', caption: 'Hands-on tincture workshop', sortOrder: 2 },
+    { url: 'https://picsum.photos/id/1035/1200/900', caption: 'Seminar Q&A session', sortOrder: 3 },
+    { url: 'https://picsum.photos/id/1043/1200/900', caption: 'Herb identification walk', sortOrder: 4 },
+  ];
+  for (const image of galleryImages) {
+    const existing = await prisma.galleryImage.findFirst({ where: { url: image.url } });
+    if (!existing) await prisma.galleryImage.create({ data: image });
+  }
+
   console.log(`Seeded admin user: ${adminEmail} / ${adminPassword} (role ADMIN)`);
   console.log(`Seeded editor user: ${editorEmail} / ${editorPassword} (role CONTENT_EDITOR)`);
   console.log('First login for each will prompt MFA setup (authenticator app required).');

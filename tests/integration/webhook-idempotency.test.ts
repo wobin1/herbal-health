@@ -56,6 +56,8 @@ describeIfDb('webhook idempotency under concurrent duplicate delivery (real Post
         totalMinorUnits: 1000,
         buyerEmail: 'buyer@example.com',
         buyerName: 'Buyer',
+        buyerPhone: '555-0100',
+        buyerCountry: 'US',
         items: { create: { eventTicketTypeId: ticketType.id, quantity: 1, unitPriceMinorUnits: 1000, subtotalMinorUnits: 1000 } },
       },
       include: { items: true },
