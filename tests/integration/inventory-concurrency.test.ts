@@ -72,27 +72,18 @@ describeIfDb('inventory reservation under concurrency (real Postgres)', () => {
     await prisma.$disconnect();
   });
 
-  function attendeesFor(quantity: number) {
-    return Array.from({ length: quantity }, (_, i) => ({
-      firstName: 'Attendee',
-      lastName: String(i),
-      email: `attendee-${i}-${Math.random()}@example.com`,
-      phone: '555-0100',
-      country: 'US',
-    }));
-  }
-
   it('never oversells capacity when many buyers race for the same ticket type', async () => {
     // Capacity is 5. Fire 10 concurrent single-ticket purchase attempts.
-    const attempts = Array.from({ length: 10 }, () =>
+    const attempts = Array.from({ length: 10 }, (_, i) =>
       createPendingOrder(
         {
           eventId,
           ticketTypeId,
           quantity: 1,
-          attendees: attendeesFor(1),
-          buyerEmail: 'buyer@example.com',
+          buyerEmail: `buyer-${i}-${Math.random()}@example.com`,
           buyerName: 'Buyer',
+          buyerPhone: '555-0100',
+          buyerCountry: 'US',
           termsVersion: '2026-01-01',
         } as never,
         {},
