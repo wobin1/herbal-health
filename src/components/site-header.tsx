@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { CloseIcon, LockIcon, MenuIcon, UserIcon } from '@/components/icons';
 
 const NAV_LINKS = [
@@ -17,10 +17,12 @@ export function SiteHeader() {
   const pathname = usePathname();
   const isHome = pathname === '/';
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [lastPathname, setLastPathname] = useState(pathname);
 
-  useEffect(() => {
+  if (pathname !== lastPathname) {
+    setLastPathname(pathname);
     setIsMenuOpen(false);
-  }, [pathname]);
+  }
 
   return (
     <header
