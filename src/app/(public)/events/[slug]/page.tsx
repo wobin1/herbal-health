@@ -1,7 +1,9 @@
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
-import { getPublicEventBySlug } from '@/server/services/event-service';
+import { getPublicEventBySlug, listAlternativeEvents } from '@/server/services/event-service';
 import { getEventStatusCta } from '@/lib/events/status-cta';
+import { getSeatsRemaining } from '@/lib/events/availability';
 import { TicketSelector } from '@/components/ticket-selector';
 
 const EVENT_DATE_FORMATTER = new Intl.DateTimeFormat('en-US', {
@@ -36,6 +38,13 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
   if (!event) notFound();
 
   const cta = getEventStatusCta(event.status);
+
+  const now = new Date();
+  const isSoldOut =
+    (event.status === 'ON_SALE' || event.status === 'SOLD_OUT') &&
+    event.ticketTypes.length > 0 &&
+    event.ticketTypes.every((ticket) => getSeatsRemaining(ticket) === 0);
+  const alternatives = isSoldOut ? await listAlternativeEvents(event, now) : [];
 
   const structuredData = {
     '@context': 'https://schema.org',
@@ -111,7 +120,7 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
               href={event.location.mapUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-2 inline-block text-sm font-medium text-primary-950 underline-offset-2 hover:underline"
+              className="text-primary-950 mt-2 inline-block text-sm font-medium underline-offset-2 hover:underline"
             >
               Open in Google Maps
             </a>
@@ -154,13 +163,22 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
       ) : null}
 
       {event.ticketTypes.length > 0 ? (
-        <section className="mt-8" aria-labelledby="tickets-heading">
+        <section id="tickets" className="mt-8 scroll-mt-24" aria-labelledby="tickets-heading">
           <h2 id="tickets-heading" className="text-xl font-semibold text-neutral-900">
             Tickets
           </h2>
           <div className="mt-3 text-neutral-600">
             {event.status === 'ON_SALE' ? (
-              <TicketSelector eventId={event.id} tickets={event.ticketTypes} />
+              <TicketSelector
+                eventId={event.id}
+                tickets={event.ticketTypes.map((ticket) => ({
+                  id: ticket.id,
+                  name: ticket.name,
+                  priceMinorUnits: ticket.priceMinorUnits,
+                  currency: ticket.currency,
+                  seatsRemaining: getSeatsRemaining(ticket),
+                }))}
+              />
             ) : (
               <ul className="space-y-2">
                 {event.ticketTypes.map((ticket) => (
@@ -177,21 +195,43 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
               </ul>
             )}
           </div>
+          {isSoldOut ? (
+            <div role="status" className="mt-6 rounded-lg border border-neutral-200 p-4">
+              <h3 className="font-semibold text-neutral-900">This event is sold out</h3>
+              {alternatives.length > 0 ? (
+                <>
+                  <p className="mt-1 text-neutral-600">
+                    Other upcoming events in {event.city}, {event.state} with seats available:
+                  </p>
+                  <ul className="mt-3 space-y-2">
+                    {alternatives.map((alt) => (
+                      <li key={alt.id}>
+                        <Link
+                          href={`/events/${alt.slug}`}
+                          className="text-primary-950 focus-visible:outline-primary-950 font-medium underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2"
+                        >
+                          {alt.title}
+                        </Link>
+                        <span className="block text-sm text-neutral-600">
+                          {EVENT_DATE_FORMATTER.format(alt.startAt)}
+                          {alt.location ? ` · ${alt.location.name}` : ''}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              ) : (
+                <p className="mt-1 text-neutral-600">
+                  There are no other upcoming events with available seats in {event.city} right now.
+                </p>
+              )}
+            </div>
+          ) : null}
         </section>
       ) : null}
 
-      {cta.label ? (
-        <p className="mt-10">
-          <span
-            className={
-              cta.ctaEnabled
-                ? 'inline-block rounded-full bg-primary-950 px-6 py-3 text-sm font-medium text-neutral-50'
-                : 'inline-block rounded-full border border-neutral-300 px-6 py-3 text-sm font-medium text-neutral-500'
-            }
-          >
-            {cta.label}
-          </span>
-        </p>
+      {cta.label && !cta.ctaEnabled ? (
+        <p className="mt-10 font-medium text-neutral-600">{cta.label}</p>
       ) : null}
     </article>
   );

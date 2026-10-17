@@ -19,7 +19,11 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
         Your payment is being confirmed. You will receive a confirmation email shortly with your
         registration reference.
       </p>
-      {orderId ? <p className="mt-2 text-sm text-neutral-500">Order reference: {orderId}</p> : null}
+      {orderId ? <p className="mt-2 text-sm text-neutral-600">Order ID: {orderId}</p> : null}
+      <p className="mt-2 text-sm text-neutral-600">
+        Each ticket has its own registration reference (like HHS-2026-XXXXXX). You&apos;ll find them
+        in your confirmation email, not in the order ID.
+      </p>
       <p className="mt-8">
         <Link
           href="/registrations/lookup"

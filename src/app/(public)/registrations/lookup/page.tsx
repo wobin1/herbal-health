@@ -20,9 +20,16 @@ export default function RegistrationLookupPage() {
     e.preventDefault();
     setError(null);
     setResult(null);
+    const normalizedReference = reference.trim().toUpperCase();
+    if (!normalizedReference.startsWith('HHS-')) {
+      setError(
+        'That doesn\u2019t look like a registration reference. References look like HHS-2026-XXXXXX and are in your confirmation email. An order ID won\u2019t work here.',
+      );
+      return;
+    }
     setLoading(true);
     try {
-      const params = new URLSearchParams({ reference, email });
+      const params = new URLSearchParams({ reference: normalizedReference, email: email.trim() });
       const response = await fetch(`/api/registrations/lookup?${params.toString()}`);
       if (!response.ok) {
         setError('No registration found for that reference and email.');

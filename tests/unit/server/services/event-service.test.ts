@@ -32,6 +32,7 @@ vi.mock('@/server/services/email-queue-service', () => ({ enqueueEmail: enqueueE
 const {
   listPublicEvents,
   getPublicEventBySlug,
+  listAlternativeEvents,
   publishEvent,
   cancelEvent,
   completeEvent,
@@ -129,6 +130,49 @@ describe('getPublicEventBySlug', () => {
     prismaMock.event.findFirst.mockResolvedValue({ ...COMPLETE_EVENT, status: 'ON_SALE' });
     const event = await getPublicEventBySlug('herbal-101');
     expect(event?.slug).toBe('herbal-101');
+  });
+});
+
+describe('listAlternativeEvents', () => {
+  const tt = (overrides = {}) => ({
+    capacity: 10,
+    reservedCount: 0,
+    soldCount: 0,
+    salesStartAt: null,
+    salesEndAt: null,
+    ...overrides,
+  });
+
+  it('queries upcoming on-sale events in the same city, excluding the current one', async () => {
+    prismaMock.event.findMany.mockResolvedValue([]);
+    const now = new Date('2026-06-01T00:00:00Z');
+    await listAlternativeEvents({ id: 'evt-1', city: 'Austin', state: 'TX' }, now);
+
+    expect(prismaMock.event.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          id: { not: 'evt-1' },
+          city: 'Austin',
+          state: 'TX',
+          status: 'ON_SALE',
+          startAt: { gte: now },
+        },
+        orderBy: { startAt: 'asc' },
+      }),
+    );
+  });
+
+  it('keeps only events with at least one purchasable ticket type', async () => {
+    prismaMock.event.findMany.mockResolvedValue([
+      { id: 'a', ticketTypes: [tt({ soldCount: 10 })] },
+      { id: 'b', ticketTypes: [tt({ soldCount: 10 }), tt()] },
+      { id: 'c', ticketTypes: [] },
+    ]);
+    const result = await listAlternativeEvents(
+      { id: 'evt-1', city: 'Austin', state: 'TX' },
+      new Date('2026-06-01T00:00:00Z'),
+    );
+    expect(result.map((e) => e.id)).toEqual(['b']);
   });
 });
 

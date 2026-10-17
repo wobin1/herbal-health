@@ -4,9 +4,9 @@ import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ButtonSpinner } from '@/components/icons';
+import { MAX_TICKETS_PER_ORDER } from '@/lib/events/availability';
 
 const TERMS_VERSION = '2026-01-01';
-const MAX_QUANTITY = 10;
 
 export default function CheckoutPage() {
   return (
@@ -21,7 +21,14 @@ function CheckoutForm() {
   const eventId = searchParams.get('eventId') ?? '';
   const ticketTypeId = searchParams.get('ticketTypeId') ?? '';
 
-  const [quantity, setQuantity] = useState(1);
+  // `max` is only a UI hint (seats left when the buyer left the event page); the server re-checks inventory.
+  const maxQuantity = Math.min(
+    MAX_TICKETS_PER_ORDER,
+    Math.max(1, Math.trunc(Number(searchParams.get('max'))) || MAX_TICKETS_PER_ORDER),
+  );
+  const [quantity, setQuantity] = useState(() =>
+    Math.min(maxQuantity, Math.max(1, Math.trunc(Number(searchParams.get('quantity'))) || 1)),
+  );
   const [buyerName, setBuyerName] = useState('');
   const [buyerEmail, setBuyerEmail] = useState('');
   const [buyerPhone, setBuyerPhone] = useState('');
@@ -147,13 +154,13 @@ function CheckoutForm() {
               id="quantity"
               type="number"
               min={1}
-              max={MAX_QUANTITY}
+              max={maxQuantity}
               required
               value={quantity}
               onChange={(e) => {
                 const next = Number(e.target.value);
                 if (Number.isFinite(next)) {
-                  setQuantity(Math.min(MAX_QUANTITY, Math.max(1, Math.trunc(next))));
+                  setQuantity(Math.min(maxQuantity, Math.max(1, Math.trunc(next))));
                 }
               }}
               className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 transition-colors duration-fast ease-premium focus:border-primary-950 focus:outline-none focus:ring-2 focus:ring-primary-950/30"

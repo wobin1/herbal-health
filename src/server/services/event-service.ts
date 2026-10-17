@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db/client';
 import { recordAuditLog } from '@/server/services/audit-log-service';
 import { enqueueEmail } from '@/server/services/email-queue-service';
 import { randomUUID } from 'node:crypto';
+import { isTicketPurchasable } from '@/lib/events/availability';
 import { buildPageResult, toSkipTake, type PageParams } from '@/lib/pagination';
 
 /** Fields that, if changed, warrant notifying already-registered attendees. */
@@ -125,6 +126,28 @@ export async function getPublicEventBySlug(slug: string) {
       faqOverrides: { orderBy: { sortOrder: 'asc' } },
     },
   });
+}
+
+/** Upcoming on-sale events in the same city that still have a purchasable ticket type. */
+export async function listAlternativeEvents(
+  event: Pick<Event, 'id' | 'city' | 'state'>,
+  now: Date = new Date(),
+) {
+  const events = await prisma.event.findMany({
+    where: {
+      id: { not: event.id },
+      city: event.city,
+      state: event.state,
+      status: 'ON_SALE',
+      startAt: { gte: now },
+    },
+    include: { location: true, ticketTypes: true },
+    orderBy: { startAt: 'asc' },
+    take: 6,
+  });
+  return events.filter((candidate) =>
+    candidate.ticketTypes.some((ticket) => isTicketPurchasable(ticket, now)),
+  );
 }
 
 export interface AdminEventFilters {
