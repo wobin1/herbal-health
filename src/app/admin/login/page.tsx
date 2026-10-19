@@ -6,10 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ButtonSpinner } from '@/components/admin/ui';
 
-type Stage =
-  | { step: 'credentials' }
-  | { step: 'mfa_setup'; challengeToken: string; provisioningUri: string }
-  | { step: 'mfa_required'; challengeToken: string };
+type Stage = { step: 'credentials' } | { step: 'mfa_required'; challengeToken: string };
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -20,10 +17,22 @@ export default function AdminLoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
   async function handleCredentialsSubmit(event: FormEvent) {
     event.preventDefault();
+    await requestCode();
+  }
+
+  async function handleResendCode() {
+    setCode('');
+    await requestCode();
+    setNotice('A new code is on its way. Earlier codes no longer work.');
+  }
+
+  async function requestCode() {
     setError(null);
+    setNotice(null);
     setSubmitting(true);
     try {
       const response = await fetch('/api/admin/login', {
@@ -36,15 +45,7 @@ export default function AdminLoginPage() {
         setError(data?.error?.message ?? 'Unable to sign in');
         return;
       }
-      if (data.status === 'mfa_setup_required') {
-        setStage({
-          step: 'mfa_setup',
-          challengeToken: data.challengeToken,
-          provisioningUri: data.provisioningUri,
-        });
-      } else if (data.status === 'mfa_required') {
-        setStage({ step: 'mfa_required', challengeToken: data.challengeToken });
-      }
+      setStage({ step: 'mfa_required', challengeToken: data.challengeToken });
     } finally {
       setSubmitting(false);
     }
@@ -54,6 +55,7 @@ export default function AdminLoginPage() {
     event.preventDefault();
     if (stage.step === 'credentials') return;
     setError(null);
+    setNotice(null);
     setSubmitting(true);
     try {
       const response = await fetch('/api/admin/mfa/verify', {
@@ -111,7 +113,7 @@ export default function AdminLoginPage() {
           <p className="mt-1 text-sm text-neutral-600">
             {stage.step === 'credentials'
               ? 'Admin access to the seminar series dashboard'
-              : 'Enter the code from your authenticator app'}
+              : `We emailed a 6-digit sign-in code to ${email}`}
           </p>
 
           {error && (
@@ -120,6 +122,15 @@ export default function AdminLoginPage() {
               className="mt-6 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800"
             >
               {error}
+            </p>
+          )}
+
+          {notice && (
+            <p
+              role="status"
+              className="border-primary-300 bg-primary-50 text-primary-900 mt-6 rounded-lg border px-3 py-2 text-sm"
+            >
+              {notice}
             </p>
           )}
 
@@ -215,49 +226,11 @@ export default function AdminLoginPage() {
             </form>
           )}
 
-          {stage.step === 'mfa_setup' && (
-            <form onSubmit={handleMfaSubmit} className="mt-6 flex flex-col gap-4" noValidate>
-              <p className="text-sm text-neutral-700">
-                Scan this into an authenticator app, then enter the 6-digit code to finish setting
-                up multi-factor authentication.
-              </p>
-              <p className="rounded-lg border border-neutral-300 bg-neutral-100 px-3 py-2 text-xs break-all">
-                {stage.provisioningUri}
-              </p>
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="code" className="text-sm font-medium text-neutral-800">
-                  6-digit code
-                </label>
-                <input
-                  id="code"
-                  name="code"
-                  type="text"
-                  inputMode="numeric"
-                  pattern="\d{6}"
-                  maxLength={6}
-                  autoComplete="one-time-code"
-                  required
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  className="focus:border-primary-600 focus:ring-primary-600/30 rounded-lg border border-neutral-300 px-3 py-2.5 text-sm focus:ring-2 focus:outline-none"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={submitting}
-                className="bg-primary-950 duration-fast ease-premium hover:bg-primary-900 mt-2 inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-neutral-50 transition-colors disabled:opacity-60"
-              >
-                {submitting ? <ButtonSpinner /> : null}
-                {submitting ? 'Verifying…' : 'Verify and finish setup'}
-              </button>
-            </form>
-          )}
-
           {stage.step === 'mfa_required' && (
             <form onSubmit={handleMfaSubmit} className="mt-6 flex flex-col gap-4" noValidate>
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="code" className="text-sm font-medium text-neutral-800">
-                  6-digit authentication code
+                  6-digit sign-in code
                 </label>
                 <input
                   id="code"
@@ -280,6 +253,14 @@ export default function AdminLoginPage() {
               >
                 {submitting ? <ButtonSpinner /> : null}
                 {submitting ? 'Verifying…' : 'Verify'}
+              </button>
+              <button
+                type="button"
+                onClick={handleResendCode}
+                disabled={submitting}
+                className="text-primary-900 duration-fast ease-premium focus-visible:ring-primary-600/30 self-center rounded text-sm font-medium underline-offset-4 transition-colors hover:underline focus:outline-none focus-visible:ring-2 disabled:opacity-60"
+              >
+                Send a new code
               </button>
             </form>
           )}

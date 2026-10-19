@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { loginSchema } from '@/lib/validation/auth';
-import { login, InvalidCredentialsError, AccountLockedError } from '@/server/services/auth-service';
+import {
+  login,
+  InvalidCredentialsError,
+  AccountLockedError,
+  LoginCodeDeliveryError,
+} from '@/server/services/auth-service';
 import { errorResponse } from '@/lib/http/errors';
 
 export async function POST(request: NextRequest) {
@@ -22,6 +27,14 @@ export async function POST(request: NextRequest) {
     }
     if (error instanceof AccountLockedError) {
       return errorResponse(423, 'ACCOUNT_LOCKED', 'Account is temporarily locked');
+    }
+    if (error instanceof LoginCodeDeliveryError) {
+      console.error('[admin/login] sign-in code email failed', error.cause);
+      return errorResponse(
+        503,
+        'CODE_DELIVERY_FAILED',
+        'Unable to send your sign-in code, please try again',
+      );
     }
     console.error('[admin/login] unexpected error', error);
     return errorResponse(500, 'INTERNAL_ERROR', 'Unable to process login');

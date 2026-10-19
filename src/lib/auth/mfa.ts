@@ -1,18 +1,25 @@
-import { Secret, TOTP } from 'otpauth';
+import { createHmac, randomInt, timingSafeEqual } from 'node:crypto';
 
-const ISSUER = 'Herbal Health Seminar Series';
-
-export function generateMfaSecret(): string {
-  return new Secret({ size: 20 }).base32;
+function getSecret(): string {
+  const secret = process.env.AUTH_SECRET;
+  if (!secret) throw new Error('AUTH_SECRET is not configured');
+  return secret;
 }
 
-export function buildProvisioningUri(email: string, base32Secret: string): string {
-  const totp = new TOTP({
-    issuer: ISSUER,
-    label: email,
-    secret: Secret.fromBase32(base32Secret),
-  });
-  return totp.toString();
+export function generateLoginCode(): string {
+  return randomInt(0, 1_000_000).toString().padStart(6, '0');
+}
+
+/** Keyed hash so a leaked database row can't be brute-forced offline without AUTH_SECRET. */
+export function hashLoginCode(code: string): string {
+  return createHmac('sha256', getSecret()).update(code).digest('base64url');
+}
+
+export function loginCodeMatches(codeHash: string, code: string): boolean {
+  if (!/^\d{6}$/.test(code)) return false;
+  const expected = Buffer.from(codeHash);
+  const actual = Buffer.from(hashLoginCode(code));
+  return expected.length === actual.length && timingSafeEqual(expected, actual);
 }
 
 /**
@@ -23,14 +30,10 @@ export function buildProvisioningUri(email: string, base32Secret: string): strin
  * where DEV_MFA_BYPASS_CODE is set has an MFA master key — that env var
  * MUST be removed once this app serves real customers.
  */
-export function verifyMfaToken(base32Secret: string, token: string): boolean {
-  if (!/^\d{6}$/.test(token)) return false;
-
-  if (process.env.DEV_MFA_BYPASS_CODE && token === process.env.DEV_MFA_BYPASS_CODE) {
-    return true;
-  }
-
-  const totp = new TOTP({ secret: Secret.fromBase32(base32Secret) });
-  const delta = totp.validate({ token, window: 1 });
-  return delta !== null;
+export function isMfaBypassCode(code: string): boolean {
+  return (
+    /^\d{6}$/.test(code) &&
+    Boolean(process.env.DEV_MFA_BYPASS_CODE) &&
+    code === process.env.DEV_MFA_BYPASS_CODE
+  );
 }

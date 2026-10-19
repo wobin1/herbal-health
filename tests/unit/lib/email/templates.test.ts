@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { renderEmailTemplate } from '@/lib/email/templates';
+import { renderEmailTemplate, renderAdminLoginCodeEmail } from '@/lib/email/templates';
 
 const BASE_VARS = {
   attendeeFirstName: 'Jane',
@@ -30,7 +30,48 @@ describe('renderEmailTemplate', () => {
   });
 
   it('renders the new attendee name into the transfer email', () => {
-    const result = renderEmailTemplate('REGISTRATION_TRANSFER', { ...BASE_VARS, newAttendeeName: 'Alex Smith' });
+    const result = renderEmailTemplate('REGISTRATION_TRANSFER', {
+      ...BASE_VARS,
+      newAttendeeName: 'Alex Smith',
+    });
     expect(result.text).toContain('Alex Smith');
+  });
+});
+
+describe('email layout', () => {
+  it('escapes user-supplied values in the HTML body', () => {
+    const result = renderEmailTemplate('REGISTRATION_CONFIRMATION', {
+      ...BASE_VARS,
+      attendeeFirstName: '<a href="https://evil.test">Jane</a>',
+    });
+    expect(result.html).not.toContain('<a href="https://evil.test">');
+    expect(result.html).toContain('&lt;a href=&quot;https://evil.test&quot;&gt;');
+  });
+
+  it('renders a full branded HTML document with the event details', () => {
+    const result = renderEmailTemplate('REGISTRATION_CONFIRMATION', BASE_VARS);
+    expect(result.html).toMatch(/^<!doctype html>/i);
+    expect(result.html).toContain('Herbal Health');
+    expect(result.html).toContain('Austin, TX');
+    expect(result.html).toContain('HHS-2026-ABCDEF');
+  });
+
+  it('includes the event details in the plain-text version too', () => {
+    const result = renderEmailTemplate('REGISTRATION_CONFIRMATION', BASE_VARS);
+    expect(result.text).toContain('Austin, TX');
+    expect(result.text).not.toContain('<');
+  });
+});
+
+describe('renderAdminLoginCodeEmail', () => {
+  it('shows the code prominently and states the expiry', () => {
+    const result = renderAdminLoginCodeEmail('482913', 10);
+    expect(result.html).toContain('482913');
+    expect(result.text).toContain('482913');
+    expect(result.text).toContain('10 minutes');
+  });
+
+  it('keeps the code out of the subject line, which is visible on lock screens', () => {
+    expect(renderAdminLoginCodeEmail('482913', 10).subject).not.toContain('482913');
   });
 });

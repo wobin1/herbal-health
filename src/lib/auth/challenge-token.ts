@@ -2,7 +2,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 
 const CHALLENGE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
-export type ChallengeMode = 'mfa_required' | 'mfa_setup';
+export type ChallengeMode = 'mfa_required';
 
 interface ChallengePayload {
   sub: string;

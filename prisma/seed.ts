@@ -166,7 +166,6 @@ async function main() {
       email: adminEmail,
       passwordHash: await hashPassword(adminPassword),
       role: 'ADMIN',
-      mfaEnabled: false,
       isActive: true,
     },
   });
@@ -180,7 +179,6 @@ async function main() {
       email: editorEmail,
       passwordHash: await hashPassword(editorPassword),
       role: 'CONTENT_EDITOR',
-      mfaEnabled: false,
       isActive: true,
     },
   });
@@ -266,7 +264,7 @@ async function main() {
 
   console.log(`Seeded admin user: ${adminEmail} / ${adminPassword} (role ADMIN)`);
   console.log(`Seeded editor user: ${editorEmail} / ${editorPassword} (role CONTENT_EDITOR)`);
-  console.log('First login for each will prompt MFA setup (authenticator app required).');
+  console.log('Each login emails a 6-digit sign-in code to the admin address (requires EMAIL_PROVIDER).');
 }
 
 main()
