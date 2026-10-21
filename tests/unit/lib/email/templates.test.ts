@@ -18,6 +18,11 @@ describe('renderEmailTemplate', () => {
     expect(result.html).toContain('Jane');
   });
 
+  it('shows the ticket type on the confirmation email when provided', () => {
+    const result = renderEmailTemplate('REGISTRATION_CONFIRMATION', { ...BASE_VARS, ticketTypeName: 'VIP' });
+    expect(result.text).toContain('Ticket: VIP');
+  });
+
   it('renders a distinct subject/body per email type', () => {
     const confirmation = renderEmailTemplate('REGISTRATION_CONFIRMATION', BASE_VARS);
     const cancellation = renderEmailTemplate('EVENT_CANCELLATION', BASE_VARS);

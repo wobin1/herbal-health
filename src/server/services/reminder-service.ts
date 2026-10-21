@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/db/client';
 import { enqueueEmail } from '@/server/services/email-queue-service';
+import { formatEventStart } from '@/lib/events/format-start';
 
 /** MVP reminder offsets per spec §28. Each offset gets its own dedupeKey namespace. */
 const REMINDER_OFFSETS = [
@@ -42,7 +43,7 @@ export async function sendEventReminders(now: Date = new Date()): Promise<SendEv
           registrationReference: registration.reference,
           reminderLabel: offset.label === '7d' ? 'in 7 days' : 'tomorrow',
           eventTitle: registration.event.title,
-          eventStartAt: registration.event.startAt.toISOString(),
+          eventStartAt: formatEventStart(registration.event.startAt, registration.event.timezone),
           eventLocation: `${registration.event.city}, ${registration.event.state}`,
         },
       });

@@ -3,6 +3,7 @@ import { recordAuditLog } from '@/server/services/audit-log-service';
 import { releaseSoldCapacity } from '@/server/services/inventory-service';
 import { getPaymentProvider } from '@/lib/payments/provider';
 import { enqueueEmail } from '@/server/services/email-queue-service';
+import { formatEventStart } from '@/lib/events/format-start';
 
 export class OrderNotFoundError extends Error {}
 export class OrderNotRefundableError extends Error {}
@@ -79,7 +80,7 @@ export async function refundOrder(orderId: string, actor: RefundActor) {
         registrationReference: registration.reference,
         amount,
         eventTitle: order.event.title,
-        eventStartAt: order.event.startAt.toISOString(),
+        eventStartAt: formatEventStart(order.event.startAt, order.event.timezone),
         eventLocation: `${order.event.city}, ${order.event.state}`,
       },
     });

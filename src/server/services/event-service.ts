@@ -5,6 +5,7 @@ import { enqueueEmail } from '@/server/services/email-queue-service';
 import { randomUUID } from 'node:crypto';
 import { isTicketPurchasable } from '@/lib/events/availability';
 import { buildPageResult, toSkipTake, type PageParams } from '@/lib/pagination';
+import { formatEventStart } from '@/lib/events/format-start';
 
 /** Fields that, if changed, warrant notifying already-registered attendees. */
 const NOTIFY_ON_CHANGE_FIELDS: Array<keyof Event> = ['startAt', 'endAt', 'locationId', 'city', 'state'];
@@ -27,7 +28,7 @@ async function notifyRegisteredAttendees(
         attendeeFirstName: registration.attendee.firstName,
         registrationReference: registration.reference,
         eventTitle: event.title,
-        eventStartAt: event.startAt.toISOString(),
+        eventStartAt: formatEventStart(event.startAt, event.timezone),
         eventLocation: `${event.city}, ${event.state}`,
       },
     });

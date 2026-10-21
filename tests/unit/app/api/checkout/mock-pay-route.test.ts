@@ -69,7 +69,7 @@ describe('POST /api/checkout/mock/pay', () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data.redirectUrl).toBe('/checkout/success?orderId=order-1');
+    expect(data.redirectUrl).toBe('/checkout/success?session_id=mock_cs_1');
     expect(fetchMock).toHaveBeenCalledTimes(1);
 
     const [url, init] = fetchMock.mock.calls[0];

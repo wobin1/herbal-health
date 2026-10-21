@@ -72,5 +72,5 @@ export async function POST(request: NextRequest) {
     return errorResponse(502, 'WEBHOOK_FAILED', 'Simulated payment could not be processed');
   }
 
-  return NextResponse.json({ redirectUrl: `/checkout/success?orderId=${order.id}` });
+  return NextResponse.json({ redirectUrl: `/checkout/success?session_id=${encodeURIComponent(parsed.data.sessionId)}` });
 }

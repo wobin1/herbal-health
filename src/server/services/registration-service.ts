@@ -4,6 +4,7 @@ import { generateRegistrationReference } from '@/lib/registration/reference';
 import { recordAuditLog } from '@/server/services/audit-log-service';
 import { enqueueEmail } from '@/server/services/email-queue-service';
 import { randomUUID } from 'node:crypto';
+import { formatEventStart } from '@/lib/events/format-start';
 
 type Tx = Pick<PrismaClient, 'registration'>;
 
@@ -63,10 +64,10 @@ export async function findRegistrationByReferenceAndEmail(reference: string, ema
   });
 }
 
-function eventVariables(event: { title: string; startAt: Date; city: string; state: string }) {
+function eventVariables(event: { title: string; startAt: Date; timezone: string; city: string; state: string }) {
   return {
     eventTitle: event.title,
-    eventStartAt: event.startAt.toISOString(),
+    eventStartAt: formatEventStart(event.startAt, event.timezone),
     eventLocation: `${event.city}, ${event.state}`,
   };
 }

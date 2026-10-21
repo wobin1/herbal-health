@@ -59,6 +59,7 @@ describe('processCheckoutCompleted', () => {
         {
           id: 'item-1',
           eventTicketTypeId: 'tt-1',
+          eventTicketType: { name: 'General Admission' },
           quantity: 2,
           attendees: [
             { id: 'att-1', firstName: 'Jane', lastName: 'Doe', email: 'jane@example.com' },
@@ -86,7 +87,14 @@ describe('processCheckoutCompleted', () => {
     expect(tx.registration.create).toHaveBeenCalledTimes(2);
     expect(enqueueEmailMock).toHaveBeenCalledWith(
       tx,
-      expect.objectContaining({ type: 'REGISTRATION_CONFIRMATION' }),
+      expect.objectContaining({
+        type: 'REGISTRATION_CONFIRMATION',
+        toEmail: 'jane@example.com',
+        variables: expect.objectContaining({
+          registrationReference: 'HHS-2026-ABCDEF',
+          ticketTypeName: 'General Admission',
+        }),
+      }),
     );
     expect(enqueueEmailMock).toHaveBeenCalledWith(
       tx,
@@ -141,7 +149,7 @@ describe('processCheckoutCompleted', () => {
         totalMinorUnits: 5000,
         currency: 'USD',
         event: { title: 'Herbal Basics', startAt: new Date('2026-06-01T00:00:00Z'), city: 'Austin', state: 'TX' },
-        items: [{ id: 'item-1', eventTicketTypeId: 'tt-1', quantity: 1, attendees: [{ id: 'att-1', firstName: 'A', lastName: 'B', email: 'a@example.com' }] }],
+        items: [{ id: 'item-1', eventTicketTypeId: 'tt-1', eventTicketType: { name: 'General Admission' }, quantity: 1, attendees: [{ id: 'att-1', firstName: 'A', lastName: 'B', email: 'a@example.com' }] }],
       });
       tx.payment.create = vi.fn().mockImplementation(async () => {
         if (paymentCreated) {

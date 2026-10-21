@@ -50,7 +50,8 @@ export async function POST(request: NextRequest) {
       currency: order.currency,
       buyerEmail: order.buyerEmail,
       description: 'Herbal Health Seminar ticket',
-      successUrl: `${siteUrl}/checkout/success?orderId=${order.id}`,
+      // Stripe substitutes the literal {CHECKOUT_SESSION_ID} placeholder on redirect.
+      successUrl: `${siteUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancelUrl: `${siteUrl}/checkout/cancelled?orderId=${order.id}`,
     });
 

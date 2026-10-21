@@ -70,7 +70,9 @@ test('browse -> select ticket -> checkout -> test payment -> confirmation -> reg
   await page.getByRole('button', { name: /Pay/i }).click();
 
   await page.waitForURL(/\/checkout\/success/, { timeout: 20_000 });
-  await expect(page.getByRole('heading', { name: 'Thank you!' })).toBeVisible();
+  // The page refreshes itself until the webhook has minted the registration.
+  await expect(page.getByRole('heading', { name: 'Your ticket' })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText(/^HHS-\d{4}-/)).toBeVisible();
 
   // Give the webhook a moment to process, then look the registration up.
   await page.waitForTimeout(3000);
@@ -136,7 +138,9 @@ test('mock payment provider: browse -> select ticket -> checkout -> simulated pa
   await page.getByRole('button', { name: /Pay \(simulate success\)/ }).click();
 
   await page.waitForURL(/\/checkout\/success/, { timeout: 20_000 });
-  await expect(page.getByRole('heading', { name: 'Thank you!' })).toBeVisible();
+  // The page refreshes itself until the webhook has minted the registration.
+  await expect(page.getByRole('heading', { name: 'Your ticket' })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText(/^HHS-\d{4}-/)).toBeVisible();
 
   await page.waitForTimeout(1000);
   await page.goto('/registrations/lookup');

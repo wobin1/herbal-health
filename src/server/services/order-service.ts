@@ -120,6 +120,46 @@ export async function attachCheckoutSession(orderId: string, checkoutSessionId: 
   });
 }
 
+/**
+ * Buyer-facing confirmation for the checkout success page. Keyed by the
+ * payment provider's checkout session id (unguessable, only ever handed to
+ * the buyer via the provider redirect) rather than the order id, so a
+ * guessed URL can't disclose another buyer's tickets. Tickets only exist once
+ * the webhook has marked the order PAID — this never changes order state.
+ */
+export async function getOrderConfirmation(checkoutSessionId: string) {
+  const order = await prisma.order.findUnique({
+    where: { stripeCheckoutSessionId: checkoutSessionId },
+    select: {
+      status: true,
+      buyerEmail: true,
+      event: { select: { title: true, startAt: true, timezone: true, city: true, state: true } },
+      registrations: {
+        select: {
+          reference: true,
+          status: true,
+          attendee: { select: { firstName: true, lastName: true } },
+          orderItem: { select: { eventTicketType: { select: { name: true } } } },
+        },
+        orderBy: { createdAt: 'asc' },
+      },
+    },
+  });
+  if (!order) return null;
+
+  return {
+    status: order.status,
+    buyerEmail: order.buyerEmail,
+    event: order.event,
+    tickets: order.registrations.map((registration) => ({
+      reference: registration.reference,
+      status: registration.status,
+      attendeeName: `${registration.attendee.firstName} ${registration.attendee.lastName}`,
+      ticketTypeName: registration.orderItem.eventTicketType.name,
+    })),
+  };
+}
+
 export interface OrderListFilters {
   status?: OrderStatus;
   buyerEmail?: string;

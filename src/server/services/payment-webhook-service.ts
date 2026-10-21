@@ -4,6 +4,7 @@ import { convertReservationToSale } from '@/server/services/inventory-service';
 import { createRegistrationWithUniqueReference } from '@/server/services/registration-service';
 import { enqueueEmail } from '@/server/services/email-queue-service';
 import type { PaymentWebhookEvent } from '@/lib/payments/types';
+import { formatEventStart } from '@/lib/events/format-start';
 
 function formatMoney(amountMinorUnits: number, currency: string): string {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amountMinorUnits / 100);
@@ -49,7 +50,7 @@ export async function processCheckoutCompleted(
 
         const order = await tx.order.findUnique({
           where: { id: event.orderId },
-          include: { items: { include: { attendees: true } }, event: true },
+          include: { items: { include: { attendees: true, eventTicketType: true } }, event: true },
         });
         if (!order) {
           throw new OrderNotFoundError(`Order ${event.orderId} not found`);
@@ -65,7 +66,7 @@ export async function processCheckoutCompleted(
 
         const eventVariables = {
           eventTitle: order.event.title,
-          eventStartAt: order.event.startAt.toISOString(),
+          eventStartAt: formatEventStart(order.event.startAt, order.event.timezone),
           eventLocation: `${order.event.city}, ${order.event.state}`,
         };
 
@@ -85,6 +86,7 @@ export async function processCheckoutCompleted(
               variables: {
                 attendeeFirstName: attendee.firstName,
                 registrationReference: registration.reference,
+                ticketTypeName: item.eventTicketType.name,
                 ...eventVariables,
               },
             });
@@ -164,7 +166,7 @@ export async function processCheckoutExpired(
     variables: {
       attendeeFirstName: order.buyerName,
       eventTitle: order.event.title,
-      eventStartAt: order.event.startAt.toISOString(),
+      eventStartAt: formatEventStart(order.event.startAt, order.event.timezone),
       eventLocation: `${order.event.city}, ${order.event.state}`,
     },
   });

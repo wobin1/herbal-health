@@ -15,6 +15,7 @@ const {
   attachCheckoutSession,
   listOrders,
   getOrderDetail,
+  getOrderConfirmation,
   OrderNotFoundError,
   TicketTypeNotFoundError,
   EventNotOnSaleError,
@@ -233,5 +234,66 @@ describe('getOrderDetail', () => {
         }),
       }),
     );
+  });
+});
+
+describe('getOrderConfirmation', () => {
+  const PAID_ORDER = {
+    id: 'order-1',
+    status: 'PAID',
+    buyerEmail: 'jane@example.com',
+    event: {
+      title: 'Herbal Basics',
+      startAt: new Date('2026-06-01T15:00:00Z'),
+      timezone: 'America/Chicago',
+      city: 'Austin',
+      state: 'TX',
+    },
+    registrations: [
+      {
+        reference: 'HHS-2026-ABCDEF',
+        status: 'CONFIRMED',
+        attendee: { firstName: 'Jane', lastName: 'Doe' },
+        orderItem: { eventTicketType: { name: 'General Admission' } },
+      },
+    ],
+  };
+
+  it('looks the order up by checkout session id, not order id', async () => {
+    prismaMock.order.findUnique.mockResolvedValue(PAID_ORDER);
+    await getOrderConfirmation('cs_test_1');
+    expect(prismaMock.order.findUnique).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { stripeCheckoutSessionId: 'cs_test_1' } }),
+    );
+  });
+
+  it('returns one ticket per registration with its reference, attendee name, and ticket type', async () => {
+    prismaMock.order.findUnique.mockResolvedValue(PAID_ORDER);
+    const result = await getOrderConfirmation('cs_test_1');
+    expect(result).toEqual({
+      status: 'PAID',
+      buyerEmail: 'jane@example.com',
+      event: PAID_ORDER.event,
+      tickets: [
+        {
+          reference: 'HHS-2026-ABCDEF',
+          status: 'CONFIRMED',
+          attendeeName: 'Jane Doe',
+          ticketTypeName: 'General Admission',
+        },
+      ],
+    });
+  });
+
+  it('returns no tickets while the order is still pending payment confirmation', async () => {
+    prismaMock.order.findUnique.mockResolvedValue({ ...PAID_ORDER, status: 'PENDING', registrations: [] });
+    const result = await getOrderConfirmation('cs_test_1');
+    expect(result?.status).toBe('PENDING');
+    expect(result?.tickets).toEqual([]);
+  });
+
+  it('returns null for an unknown session id', async () => {
+    prismaMock.order.findUnique.mockResolvedValue(null);
+    expect(await getOrderConfirmation('cs_unknown')).toBeNull();
   });
 });

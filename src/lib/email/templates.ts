@@ -11,6 +11,7 @@ export interface EmailVariables {
   eventStartAt: string;
   eventLocation: string;
   registrationReference?: string;
+  ticketTypeName?: string;
   orderTotal?: string;
   amount?: string;
   newAttendeeName?: string;
@@ -174,7 +175,7 @@ export function renderEmailTemplate(type: EmailType, v: EmailVariables): Rendere
           greeting,
           `Your spot at ${v.eventTitle} is confirmed. We look forward to seeing you there.`,
         ],
-        details: eventDetails(v),
+        details: [...(eventDetails(v) ?? []), ['Ticket', v.ticketTypeName]],
         footnote: 'Keep your registration reference handy — you may be asked for it at check-in.',
       });
     case 'PAYMENT_RECEIPT':
