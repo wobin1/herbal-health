@@ -68,6 +68,7 @@ export async function POST(request: NextRequest) {
     if (error instanceof InsufficientInventoryError) {
       return errorResponse(409, 'SOLD_OUT', 'Not enough tickets available');
     }
+    console.error('[checkout] failed to start checkout', error);
     return errorResponse(500, 'INTERNAL_ERROR', 'Unable to start checkout');
   }
 }
