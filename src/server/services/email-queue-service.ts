@@ -1,6 +1,8 @@
 import type { EmailType, PrismaClient } from '@prisma/client';
 import { prisma } from '@/lib/db/client';
 import { getEmailProvider } from '@/lib/email/provider';
+import { buildTicketsPdf } from '@/lib/tickets/pdf';
+import { getRegistrationTicket } from '@/server/services/order-service';
 import { renderEmailTemplate, type EmailVariables } from '@/lib/email/templates';
 
 type EnqueueTx = Pick<PrismaClient, 'emailMessage'>;
@@ -70,11 +72,21 @@ export async function processPendingEmails(limit = 50): Promise<ProcessPendingEm
     const attempts = message.attempts + 1;
     try {
       const rendered = renderEmailTemplate(message.type, message.variables as unknown as EmailVariables);
+      const variables = message.variables as unknown as EmailVariables;
+      const attachments: Array<{ filename: string; content: Buffer }> = [];
+      if (message.type === 'REGISTRATION_CONFIRMATION' && variables.registrationReference) {
+        const found = await getRegistrationTicket(variables.registrationReference);
+        if (found) {
+          const pdf = await buildTicketsPdf(found.event, [found.ticket]);
+          attachments.push({ filename: `ticket-${found.ticket.reference}.pdf`, content: Buffer.from(pdf) });
+        }
+      }
       await provider.send({
         toEmail: message.toEmail,
         subject: rendered.subject,
         html: rendered.html,
         text: rendered.text,
+        attachments,
       });
       await prisma.emailMessage.update({
         where: { id: message.id },
@@ -83,6 +95,7 @@ export async function processPendingEmails(limit = 50): Promise<ProcessPendingEm
       sent += 1;
     } catch (error) {
       const lastError = error instanceof Error ? error.message : String(error);
+      console.error(`[email-queue] ${message.type} to ${message.toEmail} failed:`, lastError);
       await prisma.emailMessage.update({
         where: { id: message.id },
         data: { status: attempts >= MAX_ATTEMPTS ? 'FAILED' : 'PENDING', attempts, lastError },

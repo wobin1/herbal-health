@@ -3,6 +3,7 @@ export interface SendEmailInput {
   subject: string;
   html: string;
   text: string;
+  attachments?: Array<{ filename: string; content: Buffer }>;
 }
 
 export interface EmailProvider {
@@ -41,6 +42,12 @@ class ResendEmailProvider implements EmailProvider {
         subject: input.subject,
         html: input.html,
         text: input.text,
+        ...(input.attachments?.length && {
+          attachments: input.attachments.map((a) => ({
+            filename: a.filename,
+            content: a.content.toString('base64'),
+          })),
+        }),
       }),
     });
     if (!response.ok) {
