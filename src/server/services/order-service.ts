@@ -160,6 +160,28 @@ export async function getOrderConfirmation(checkoutSessionId: string) {
   };
 }
 
+/** Ticket data for one registration, used to build the PDF attached to its confirmation email. */
+export async function getRegistrationTicket(reference: string) {
+  const registration = await prisma.registration.findUnique({
+    where: { reference },
+    select: {
+      reference: true,
+      attendee: { select: { firstName: true, lastName: true } },
+      orderItem: { select: { eventTicketType: { select: { name: true } } } },
+      event: { select: { title: true, startAt: true, timezone: true, city: true, state: true } },
+    },
+  });
+  if (!registration) return null;
+  return {
+    event: registration.event,
+    ticket: {
+      reference: registration.reference,
+      attendeeName: `${registration.attendee.firstName} ${registration.attendee.lastName}`,
+      ticketTypeName: registration.orderItem.eventTicketType.name,
+    },
+  };
+}
+
 export interface OrderListFilters {
   status?: OrderStatus;
   buyerEmail?: string;

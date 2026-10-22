@@ -17,7 +17,8 @@ function sendQueuedEmailsAfterResponse() {
   after(async () => {
     try {
       await processPendingEmails();
-    } catch {
+    } catch (error) {
+      console.error('[stripe-webhook] sending queued emails failed', error);
       // left PENDING for the scheduled retry
     }
   });

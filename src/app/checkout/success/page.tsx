@@ -63,6 +63,16 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
         {tickets.length === 1 ? 'this ticket' : 'these tickets'} to {confirmation.buyerEmail}.
       </p>
 
+      <p className="mt-6 text-center">
+        <a
+          href={`/api/checkout/tickets/pdf?session_id=${encodeURIComponent(sessionId!)}`}
+          download
+          className="inline-block rounded-lg bg-primary-950 px-5 py-3 text-sm font-semibold text-neutral-50 transition-colors duration-fast ease-premium hover:bg-primary-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-950"
+        >
+          Download {tickets.length === 1 ? 'ticket' : 'tickets'} (PDF)
+        </a>
+      </p>
+
       <ul className="mt-10 space-y-6">
         {tickets.map((ticket) => (
           <li key={ticket.reference} className="overflow-hidden rounded-2xl border border-neutral-300 bg-white">
