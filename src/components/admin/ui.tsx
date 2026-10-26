@@ -135,6 +135,9 @@ const STATUS_STYLES: Record<string, string> = {
   ON_SALE: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
   SOLD_OUT: 'bg-amber-50 text-amber-700 ring-amber-600/20',
   COMPLETED: 'bg-neutral-100 text-neutral-600 ring-neutral-500/20',
+  // account state
+  ACTIVE: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
+  INACTIVE: 'bg-neutral-100 text-neutral-600 ring-neutral-500/20',
 };
 
 function toTitleCase(value: string): string {
@@ -148,7 +151,10 @@ function toTitleCase(value: string): string {
 export function StatusBadge({ status }: { status: string }) {
   const style = STATUS_STYLES[status] ?? 'bg-neutral-100 text-neutral-600 ring-neutral-500/20';
   return (
-    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset ${style}`}>
+    <span
+      className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset ${style}`}
+    >
+      <span aria-hidden="true" className="size-1.5 rounded-full bg-current" />
       {toTitleCase(status)}
     </span>
   );

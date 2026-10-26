@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { ViewTransition } from 'react';
 import { getAdminSession } from '@/lib/auth/require-admin';
+import { hasPermission } from '@/lib/auth/rbac';
 import { AdminSidebar } from '@/components/admin/admin-sidebar';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -17,7 +18,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       >
         Skip to main content
       </a>
-      <AdminSidebar email={session.adminUser.email} />
+      <AdminSidebar
+        email={session.adminUser.email}
+        canManageUsers={hasPermission(session.adminUser.role, 'users:manage')}
+      />
       <main id="admin-main-content" className="px-6 py-10 lg:ml-64 lg:px-10">
         <div className="mx-auto max-w-6xl">
           <ViewTransition default="none" enter="page-fade" exit="page-fade">

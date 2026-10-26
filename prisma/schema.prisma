@@ -47,6 +47,23 @@ model AdminLoginCode {
   @@index([adminUserId])
 }
 
+/// Emailed invitation to create an admin account. The raw token only ever
+/// lives in the email link; only its SHA-256 hash is stored. Single-use
+/// (consumedAt) and expiring (expiresAt). No FK to AdminUser: the account
+/// doesn't exist until the invite is accepted. The inviter is recorded in the
+/// audit log, not here.
+model AdminInvite {
+  id         String    @id @default(cuid())
+  email      String
+  role       AdminRole
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([email])
+}
+
 model AdminSession {
   id          String   @id @default(cuid())
   adminUserId String
