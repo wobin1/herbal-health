@@ -36,14 +36,24 @@ const NAV_LINKS: NavLink[] = [
   { href: '/admin/contact-messages', label: 'Contact Messages', icon: MailIcon },
 ];
 
+const USERS_LINK: NavLink = { href: '/admin/users', label: 'Admin Users', icon: UsersIcon };
+
 function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-function NavList({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
+function NavList({
+  pathname,
+  links,
+  onNavigate,
+}: {
+  pathname: string;
+  links: NavLink[];
+  onNavigate?: () => void;
+}) {
   return (
     <nav aria-label="Admin" className="flex flex-1 flex-col gap-1 px-3">
-      {NAV_LINKS.map((link) => {
+      {links.map((link) => {
         const active = isActive(pathname, link.href);
         const Icon = link.icon;
         return (
@@ -67,7 +77,8 @@ function NavList({ pathname, onNavigate }: { pathname: string; onNavigate?: () =
   );
 }
 
-export function AdminSidebar({ email }: { email: string }) {
+export function AdminSidebar({ email, canManageUsers }: { email: string; canManageUsers: boolean }) {
+  const links = canManageUsers ? [...NAV_LINKS, USERS_LINK] : NAV_LINKS;
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -189,7 +200,7 @@ export function AdminSidebar({ email }: { email: string }) {
               </button>
             </div>
             <div className="mt-4 flex flex-1 flex-col overflow-y-auto">
-              <NavList pathname={pathname} onNavigate={closeMobile} />
+              <NavList pathname={pathname} links={links} onNavigate={closeMobile} />
             </div>
             {accountFooter}
           </div>
@@ -203,7 +214,7 @@ export function AdminSidebar({ email }: { email: string }) {
       >
         <div className="border-b border-neutral-50/10 py-3">{brand}</div>
         <div className="flex flex-1 flex-col overflow-y-auto py-4">
-          <NavList pathname={pathname} />
+          <NavList pathname={pathname} links={links} />
         </div>
         {accountFooter}
       </aside>

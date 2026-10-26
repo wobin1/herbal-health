@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { renderEmailTemplate, renderAdminLoginCodeEmail } from '@/lib/email/templates';
+import { renderEmailTemplate, renderAdminLoginCodeEmail, renderAdminInviteEmail } from '@/lib/email/templates';
 
 const BASE_VARS = {
   attendeeFirstName: 'Jane',
@@ -78,5 +78,21 @@ describe('renderAdminLoginCodeEmail', () => {
 
   it('keeps the code out of the subject line, which is visible on lock screens', () => {
     expect(renderAdminLoginCodeEmail('482913', 10).subject).not.toContain('482913');
+  });
+});
+
+describe('renderAdminInviteEmail', () => {
+  const url = 'https://herbal.test/admin/accept-invite?token=abc_DEF-123';
+
+  it('includes the accept link in both html and text and states the role and expiry', () => {
+    const result = renderAdminInviteEmail(url, 'Content editor', 72);
+    expect(result.html).toContain(url);
+    expect(result.text).toContain(url);
+    expect(result.text).toContain('Content editor');
+    expect(result.text).toContain('72 hours');
+  });
+
+  it('keeps the token out of the subject line', () => {
+    expect(renderAdminInviteEmail(url, 'Admin', 72).subject).not.toContain('abc_DEF');
   });
 });

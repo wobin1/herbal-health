@@ -34,6 +34,8 @@ interface EmailContent {
   details?: Array<[label: string, value: string | undefined]>;
   /** Large, letter-spaced value, e.g. a sign-in code. */
   highlight?: string;
+  /** Call-to-action button; the URL is also printed in the plain-text body. */
+  action?: { label: string; url: string };
   /** Small print under the card. */
   footnote?: string;
 }
@@ -102,6 +104,14 @@ function renderHtml(content: EmailContent): string {
       </table>`
     : '';
 
+  const action = content.action
+    ? `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:8px 0 24px;">
+        <tr><td style="background:${COLOR.forest};border-radius:999px;">
+          <a href="${escapeHtml(content.action.url)}" style="display:inline-block;padding:14px 28px;font-family:${SANS};font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;">${escapeHtml(content.action.label)}</a>
+        </td></tr>
+      </table>`
+    : '';
+
   const footnote = content.footnote
     ? `<p style="margin:24px 0 0;font-family:${SANS};font-size:13px;line-height:1.5;color:${COLOR.muted};">${escapeHtml(content.footnote)}</p>`
     : '';
@@ -129,7 +139,7 @@ function renderHtml(content: EmailContent): string {
       <tr><td style="height:4px;line-height:4px;font-size:0;background:${COLOR.accent};">&nbsp;</td></tr>
       <tr><td style="background:#ffffff;border-radius:0 0 16px 16px;padding:36px 32px 32px;">
         <h1 style="margin:0 0 20px;font-family:${SERIF};font-size:26px;line-height:1.25;font-weight:normal;color:${COLOR.forest};">${escapeHtml(content.heading)}</h1>
-        ${paragraphs}${highlight}${detailsCard}${footnote}
+        ${paragraphs}${action}${highlight}${detailsCard}${footnote}
       </td></tr>
       <tr><td align="center" style="padding:24px 16px 0;font-family:${SANS};font-size:12px;line-height:1.6;color:${COLOR.muted};">
         Herbal Health Seminar Series · Educational events, not medical advice<br>${siteLink}
@@ -143,6 +153,7 @@ function renderHtml(content: EmailContent): string {
 
 function renderText(content: EmailContent): string {
   const parts = [content.heading, ...content.paragraphs];
+  if (content.action) parts.push(`${content.action.label}: ${content.action.url}`);
   if (content.highlight) parts.push(content.highlight);
   const details = (content.details ?? []).filter(([, value]) => Boolean(value));
   if (details.length) parts.push(details.map(([label, value]) => `${label}: ${value}`).join('\n'));
@@ -305,5 +316,23 @@ export function renderAdminLoginCodeEmail(code: string, expiresInMinutes: number
     paragraphs: ['Use this code to finish signing in to the Herbal Health admin dashboard.'],
     highlight: code,
     footnote: `It expires in ${expiresInMinutes} minutes and can be used once. If you didn't try to sign in, someone may know your password — change it and tell another admin.`,
+  });
+}
+
+/** Sent directly (not via the outbox) so the single-use link is never persisted in plain text. */
+export function renderAdminInviteEmail(
+  inviteUrl: string,
+  roleLabel: string,
+  expiresInHours: number,
+): RenderedEmail {
+  return render("You're invited to the Herbal Health admin dashboard", {
+    preheader: `Set your password to join as ${roleLabel}.`,
+    heading: "You're invited",
+    paragraphs: [
+      `You've been invited to join the Herbal Health admin dashboard as ${roleLabel}.`,
+      'Choose a password to activate your account. Signing in will also ask for a code we email you.',
+    ],
+    action: { label: 'Accept invitation', url: inviteUrl },
+    footnote: `This link expires in ${expiresInHours} hours and can be used once. If you weren't expecting it, you can ignore this email.`,
   });
 }
