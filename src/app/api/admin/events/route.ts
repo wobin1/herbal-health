@@ -2,7 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requirePermission, UnauthorizedError, ForbiddenError } from '@/lib/auth/require-admin';
 import { errorResponse } from '@/lib/http/errors';
 import { eventCreateSchema } from '@/lib/validation/event';
-import { createEvent, listAdminEvents } from '@/server/services/event-service';
+import {
+  createEvent,
+  EventLocationNotFoundError,
+  EventSlugConflictError,
+  listAdminEvents,
+} from '@/server/services/event-service';
 import type { EventStatus } from '@prisma/client';
 import { parsePageParams } from '@/lib/pagination';
 
@@ -36,6 +41,13 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if (error instanceof UnauthorizedError) return errorResponse(401, 'UNAUTHENTICATED', 'Not signed in');
     if (error instanceof ForbiddenError) return errorResponse(403, 'FORBIDDEN', 'Insufficient permissions');
+    if (error instanceof EventSlugConflictError) {
+      return errorResponse(409, 'SLUG_TAKEN', 'An event with this slug already exists. Choose a different slug.');
+    }
+    if (error instanceof EventLocationNotFoundError) {
+      return errorResponse(400, 'LOCATION_NOT_FOUND', 'The selected location no longer exists.');
+    }
+    console.error('Failed to create event', error);
     return errorResponse(500, 'INTERNAL_ERROR', 'Unable to create event');
   }
 }

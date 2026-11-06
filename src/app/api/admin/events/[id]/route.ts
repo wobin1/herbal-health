@@ -4,7 +4,9 @@ import { errorResponse } from '@/lib/http/errors';
 import { eventUpdateSchema } from '@/lib/validation/event';
 import {
   deleteEvent,
+  EventLocationNotFoundError,
   EventNotFoundError,
+  EventSlugConflictError,
   EventValidationError,
   getAdminEventById,
   updateEvent,
@@ -40,6 +42,13 @@ export async function PATCH(request: NextRequest, ctx: RouteContext<'/api/admin/
     if (error instanceof UnauthorizedError) return errorResponse(401, 'UNAUTHENTICATED', 'Not signed in');
     if (error instanceof ForbiddenError) return errorResponse(403, 'FORBIDDEN', 'Insufficient permissions');
     if (error instanceof EventNotFoundError) return errorResponse(404, 'NOT_FOUND', 'Event not found');
+    if (error instanceof EventSlugConflictError) {
+      return errorResponse(409, 'SLUG_TAKEN', 'An event with this slug already exists. Choose a different slug.');
+    }
+    if (error instanceof EventLocationNotFoundError) {
+      return errorResponse(400, 'LOCATION_NOT_FOUND', 'The selected location no longer exists.');
+    }
+    console.error('Failed to update event', error);
     return errorResponse(500, 'INTERNAL_ERROR', 'Unable to update event');
   }
 }

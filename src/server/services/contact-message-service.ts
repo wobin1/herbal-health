@@ -22,7 +22,7 @@ export interface ContactMessageContext {
   ipAddress?: string | null;
 }
 
-const DEFAULT_CONTACT_INBOX = 'hello@herbalhealthseminars.com';
+const DEFAULT_CONTACT_INBOX = 'herbalschool26@gmail.com';
 
 function escapeHtml(value: string): string {
   return value

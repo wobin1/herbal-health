@@ -75,7 +75,7 @@ describe('sendContactMessage', () => {
 
     expect(sendMock).toHaveBeenCalledTimes(1);
     const call = sendMock.mock.calls[0][0];
-    expect(call.toEmail).toBe('hello@herbalhealthseminars.com');
+    expect(call.toEmail).toBe('herbalschool26@gmail.com');
     expect(call.subject).toContain('Jamie Rivera');
     expect(call.text).toContain('jamie@example.com');
     expect(call.text).toContain('When is the next seminar in Austin?');

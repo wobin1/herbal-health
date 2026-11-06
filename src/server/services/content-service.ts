@@ -18,7 +18,7 @@ const DEFAULT_HOMEPAGE_CONTENT = {
   finalCtaHref: '/events',
   footerAboutText:
     'Herbal Health Seminar Series hosts educational events on natural wellness across the country.',
-  footerContactEmail: 'hello@herbalhealthseminars.com',
+  footerContactEmail: 'herbalschool26@gmail.com',
   footerContactPhone: null as string | null,
 };
 
