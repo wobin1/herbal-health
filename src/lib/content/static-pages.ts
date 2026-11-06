@@ -12,7 +12,7 @@ export const ABOUT_CONTENT = {
 export const CONTACT_CONTENT = {
   title: 'Contact Us',
   intro: 'Have a question about an upcoming seminar or your registration?',
-  body: 'Email us at hello@herbalhealthseminars.com and our team will respond within two business days.',
+  body: 'Email us at herbalschool26@gmail.com and our team will respond within two business days.',
 };
 
 export const FAQ_ITEMS = [

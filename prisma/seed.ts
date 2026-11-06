@@ -23,7 +23,7 @@ async function main() {
       finalCtaHref: '/events',
       footerAboutText:
         'Herbal Health Seminar Series hosts educational events on natural wellness across the country.',
-      footerContactEmail: 'hello@herbalhealthseminars.com',
+      footerContactEmail: 'herbalschool26@gmail.com',
       footerContactPhone: null,
     },
   });
@@ -121,7 +121,7 @@ async function main() {
     {
       slug: 'CONTACT',
       title: 'Contact Us',
-      body: 'Have a question about an upcoming seminar or your registration?\n\nEmail us at hello@herbalhealthseminars.com and our team will respond within two business days.',
+      body: 'Have a question about an upcoming seminar or your registration?\n\nEmail us at herbalschool26@gmail.com and our team will respond within two business days.',
     },
     {
       slug: 'TERMS',
