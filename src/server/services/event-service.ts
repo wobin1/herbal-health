@@ -1,4 +1,5 @@
-import type { Event, EventStatus, EventTicketType, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
+import type { Event, EventStatus, EventTicketType } from '@prisma/client';
 import { prisma } from '@/lib/db/client';
 import { recordAuditLog } from '@/server/services/audit-log-service';
 import { enqueueEmail } from '@/server/services/email-queue-service';
@@ -52,6 +53,17 @@ export interface Actor {
 }
 
 export class EventNotFoundError extends Error {}
+export class EventSlugConflictError extends Error {}
+export class EventLocationNotFoundError extends Error {}
+
+/** Translates known Prisma write failures on Event into domain errors; rethrows anything else. */
+function mapEventWriteError(error: unknown): never {
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (error.code === 'P2002') throw new EventSlugConflictError('An event with this slug already exists');
+    if (error.code === 'P2003') throw new EventLocationNotFoundError('The selected location does not exist');
+  }
+  throw error;
+}
 
 export class EventValidationError extends Error {
   missingFields: string[];
@@ -199,7 +211,7 @@ export type EventInput = Omit<
 >;
 
 export async function createEvent(input: EventInput, actor: Actor): Promise<Event> {
-  const event = await prisma.event.create({ data: input });
+  const event = await prisma.event.create({ data: input }).catch(mapEventWriteError);
   await recordAuditLog({
     actorId: actor.actorId,
     action: 'event.created',
@@ -217,7 +229,7 @@ export async function updateEvent(
 ): Promise<Event> {
   const existing = await prisma.event.findUnique({ where: { id } });
   if (!existing) throw new EventNotFoundError(`Event ${id} not found`);
-  const event = await prisma.event.update({ where: { id }, data: input });
+  const event = await prisma.event.update({ where: { id }, data: input }).catch(mapEventWriteError);
   await recordAuditLog({
     actorId: actor.actorId,
     action: 'event.updated',

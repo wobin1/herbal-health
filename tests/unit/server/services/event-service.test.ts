@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { Prisma } from '@prisma/client';
 
 const prismaMock = {
   event: {
@@ -44,6 +45,10 @@ const {
   deleteTicketType,
   EventValidationError,
   EventNotFoundError,
+  createEvent,
+  updateEvent,
+  EventSlugConflictError,
+  EventLocationNotFoundError,
 } = await import('@/server/services/event-service');
 
 const ACTOR = { actorId: 'admin-1', ipAddress: '127.0.0.1' };
@@ -382,5 +387,55 @@ describe('deleteTicketType', () => {
     await deleteTicketType('evt-1', 'tt-1', ACTOR);
     expect(prismaMock.eventTicketType.delete).toHaveBeenCalledWith({ where: { id: 'tt-1' } });
     expect(auditLogMock).toHaveBeenCalledWith(expect.objectContaining({ action: 'event.ticket_type.deleted' }));
+  });
+});
+
+function prismaError(code: string) {
+  return new Prisma.PrismaClientKnownRequestError('db error', { code, clientVersion: 'test' });
+}
+
+const NEW_EVENT_INPUT = {
+  slug: 'herbal-101',
+  title: 'Herbal 101',
+  shortDescription: 'Short',
+  startAt: new Date('2026-01-01T00:00:00Z'),
+  timezone: 'America/New_York',
+  city: 'Austin',
+  state: 'TX',
+  locationId: 'loc-missing',
+};
+
+describe('createEvent', () => {
+  it('throws EventSlugConflictError when the slug is already taken', async () => {
+    prismaMock.event.create.mockRejectedValue(prismaError('P2002'));
+    await expect(createEvent(NEW_EVENT_INPUT, ACTOR)).rejects.toBeInstanceOf(EventSlugConflictError);
+    expect(auditLogMock).not.toHaveBeenCalled();
+  });
+
+  it('throws EventLocationNotFoundError when the location does not exist', async () => {
+    prismaMock.event.create.mockRejectedValue(prismaError('P2003'));
+    await expect(createEvent(NEW_EVENT_INPUT, ACTOR)).rejects.toBeInstanceOf(EventLocationNotFoundError);
+  });
+
+  it('rethrows unrelated database errors unchanged', async () => {
+    const original = prismaError('P1001');
+    prismaMock.event.create.mockRejectedValue(original);
+    await expect(createEvent(NEW_EVENT_INPUT, ACTOR)).rejects.toBe(original);
+  });
+});
+
+describe('updateEvent', () => {
+  it('throws EventSlugConflictError when changing to a slug already in use', async () => {
+    prismaMock.event.findUnique.mockResolvedValue(COMPLETE_EVENT);
+    prismaMock.event.update.mockRejectedValue(prismaError('P2002'));
+    await expect(updateEvent('evt-1', { slug: 'taken' }, ACTOR)).rejects.toBeInstanceOf(EventSlugConflictError);
+  });
+
+  it('throws EventLocationNotFoundError when the location does not exist', async () => {
+    prismaMock.event.findUnique.mockResolvedValue(COMPLETE_EVENT);
+    prismaMock.event.update.mockRejectedValue(prismaError('P2003'));
+    await expect(updateEvent('evt-1', { locationId: 'nope' }, ACTOR)).rejects.toBeInstanceOf(
+      EventLocationNotFoundError,
+    );
   });
 });
