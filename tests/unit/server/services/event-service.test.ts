@@ -78,11 +78,11 @@ describe('listPublicEvents', () => {
     prismaMock.event.count.mockResolvedValue(0);
   });
 
-  it('only queries publicly visible statuses', async () => {
+  it('lists publicly visible events but leaves out cancelled ones', async () => {
     prismaMock.event.findMany.mockResolvedValue([]);
     await listPublicEvents({}, PAGE_1);
     const call = prismaMock.event.findMany.mock.calls[0][0];
-    expect(call.where.status.in).toEqual(['COMING_SOON', 'PUBLISHED', 'ON_SALE', 'SOLD_OUT', 'CLOSED', 'CANCELLED', 'COMPLETED']);
+    expect(call.where.status.in).toEqual(['COMING_SOON', 'PUBLISHED', 'ON_SALE', 'SOLD_OUT', 'CLOSED', 'COMPLETED']);
   });
 
   it('applies keyword, city, state, and date filters', async () => {
@@ -125,6 +125,13 @@ describe('listPublicEvents', () => {
 });
 
 describe('getPublicEventBySlug', () => {
+  it('still finds a cancelled event so ticket holders can see the cancellation', async () => {
+    prismaMock.event.findFirst.mockResolvedValue(null);
+    await getPublicEventBySlug('herbal-101');
+    const call = prismaMock.event.findFirst.mock.calls[0][0];
+    expect(call.where.status.in).toContain('CANCELLED');
+  });
+
   it('returns null when the event is not publicly visible', async () => {
     prismaMock.event.findFirst.mockResolvedValue(null);
     const event = await getPublicEventBySlug('draft-event');
