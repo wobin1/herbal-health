@@ -141,7 +141,8 @@ export function EventEditorForm({
 
   function buildPayload() {
     return {
-      slug: slugify(values.title),
+      // The slug is the event's public URL: set once on create, never changed by later edits.
+      ...(isEdit ? {} : { slug: slugify(values.title) }),
       title: values.title,
       seriesName: values.seriesName || null,
       volumeLabel: values.volumeLabel || null,

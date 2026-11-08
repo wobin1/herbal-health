@@ -113,3 +113,46 @@ describe('EventEditorForm event times', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });
+
+describe('EventEditorForm slug handling', () => {
+  it("never changes an existing event's slug (its public URL) when saving edits", async () => {
+    render(
+      <EventEditorForm
+        locations={LOCATIONS}
+        canPublish={false}
+        initialValues={{
+          id: 'evt-1',
+          slug: 'herbal-foundations-portland',
+          title: 'Herbal Foundations',
+          seriesName: '',
+          volumeLabel: '',
+          internalCode: '',
+          shortDescription: 'Short',
+          longDescription: 'Long',
+          startAt: '2026-12-06T10:00',
+          endAt: '2026-12-06T12:00',
+          timezone: 'America/Los_Angeles',
+          city: 'Portland',
+          state: 'OR',
+          locationId: '',
+          coverImageUrl: 'https://res.cloudinary.com/x/new-cover.jpg',
+          galleryImageUrls: '',
+          documentUrls: '',
+          whatYouWillLearn: '',
+          materialsIncluded: '',
+          prerequisites: '',
+          disclaimer: '',
+          seoTitle: '',
+          seoMetaDescription: '',
+          seoCanonicalUrl: '',
+          seoOgImageUrl: '',
+          status: 'ON_SALE',
+        }}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).not.toHaveProperty('slug');
+  });
+});
+

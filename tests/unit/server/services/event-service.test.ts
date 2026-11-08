@@ -406,6 +406,27 @@ const NEW_EVENT_INPUT = {
 };
 
 describe('createEvent', () => {
+  beforeEach(() => {
+    prismaMock.event.findMany.mockResolvedValue([]);
+  });
+
+  it('uses the requested slug when it is free', async () => {
+    prismaMock.event.create.mockResolvedValue({ id: 'evt-new' });
+    await createEvent(NEW_EVENT_INPUT, ACTOR);
+    expect(prismaMock.event.create).toHaveBeenCalledWith({ data: expect.objectContaining({ slug: 'herbal-101' }) });
+  });
+
+  it('appends the next free number when the slug is already used', async () => {
+    prismaMock.event.findMany.mockResolvedValue([
+      { slug: 'herbal-101' },
+      { slug: 'herbal-101-2' },
+      { slug: 'herbal-101-portland' },
+    ]);
+    prismaMock.event.create.mockResolvedValue({ id: 'evt-new' });
+    await createEvent(NEW_EVENT_INPUT, ACTOR);
+    expect(prismaMock.event.create).toHaveBeenCalledWith({ data: expect.objectContaining({ slug: 'herbal-101-3' }) });
+  });
+
   it('throws EventSlugConflictError when the slug is already taken', async () => {
     prismaMock.event.create.mockRejectedValue(prismaError('P2002'));
     await expect(createEvent(NEW_EVENT_INPUT, ACTOR)).rejects.toBeInstanceOf(EventSlugConflictError);
