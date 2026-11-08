@@ -8,6 +8,7 @@ import { parsePageParams } from '@/lib/pagination';
 import { PaginationControls } from '@/components/admin/pagination-controls';
 import { EmptyState } from '@/components/admin/ui';
 import { CalendarIcon } from '@/components/admin/icons';
+import { formatInEventTimezone } from '@/lib/events/event-time';
 
 const EVENTS_PAGE_SIZE = 12;
 
@@ -16,10 +17,7 @@ export const metadata: Metadata = {
   description: 'Browse and search upcoming Herbal Health seminars by keyword, city, state, or date.',
 };
 
-const EVENT_DATE_FORMATTER = new Intl.DateTimeFormat('en-US', {
-  dateStyle: 'medium',
-  timeZone: 'UTC',
-});
+const EVENT_DATE_OPTIONS: Intl.DateTimeFormatOptions = { dateStyle: 'medium' };
 
 function formatStartingPrice(ticketTypes: Array<{ priceMinorUnits: number; currency: string }>): string | null {
   if (ticketTypes.length === 0) return null;
@@ -155,7 +153,7 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
                       <div className="from-primary-700 to-primary-950 h-full w-full bg-gradient-to-br" />
                     )}
                     <span className="absolute left-4 top-4 rounded-full bg-neutral-50/95 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary-950 shadow-sm">
-                      {EVENT_DATE_FORMATTER.format(event.startAt)}
+                      {formatInEventTimezone(event.startAt, event.timezone, EVENT_DATE_OPTIONS)}
                     </span>
                   </div>
                   <div className="flex flex-1 flex-col p-6">

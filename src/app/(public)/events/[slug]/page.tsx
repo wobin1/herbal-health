@@ -5,12 +5,17 @@ import { getPublicEventBySlug, listAlternativeEvents } from '@/server/services/e
 import { getEventStatusCta } from '@/lib/events/status-cta';
 import { getSeatsRemaining } from '@/lib/events/availability';
 import { TicketSelector } from '@/components/ticket-selector';
+import { formatInEventTimezone } from '@/lib/events/event-time';
 
-const EVENT_DATE_FORMATTER = new Intl.DateTimeFormat('en-US', {
-  dateStyle: 'full',
-  timeStyle: 'short',
-  timeZone: 'UTC',
-});
+const EVENT_DATE_OPTIONS: Intl.DateTimeFormatOptions = {
+  weekday: 'long',
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+  hour: 'numeric',
+  minute: '2-digit',
+  timeZoneName: 'short',
+};
 
 interface EventDetailPageProps {
   params: Promise<{ slug: string }>;
@@ -87,7 +92,7 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
-      <p className="text-sm text-neutral-600">{EVENT_DATE_FORMATTER.format(event.startAt)}</p>
+      <p className="text-sm text-neutral-600">{formatInEventTimezone(event.startAt, event.timezone, EVENT_DATE_OPTIONS)}</p>
       <h1 className="mt-2 text-3xl font-semibold tracking-tight text-neutral-900">{event.title}</h1>
       <p className="mt-4 text-neutral-600">{event.shortDescription}</p>
 
@@ -213,7 +218,7 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
                           {alt.title}
                         </Link>
                         <span className="block text-sm text-neutral-600">
-                          {EVENT_DATE_FORMATTER.format(alt.startAt)}
+                          {formatInEventTimezone(alt.startAt, alt.timezone, EVENT_DATE_OPTIONS)}
                           {alt.location ? ` · ${alt.location.name}` : ''}
                         </span>
                       </li>

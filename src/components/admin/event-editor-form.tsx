@@ -1,11 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { TicketTypeManager, type TicketTypeRow } from '@/components/admin/ticket-type-manager';
 import { ImageUploadField } from '@/components/admin/image-upload-field';
 import { MultiImageUploadField } from '@/components/admin/multi-image-upload-field';
 import { ButtonSpinner } from '@/components/admin/ui';
+import { ChevronDownIcon, MapPinIcon } from '@/components/admin/icons';
+import { isValidTimezone, wallTimeToUtc } from '@/lib/events/event-time';
 import { useConfirm } from '@/components/confirm-dialog';
 import { toastError, toastSuccess } from '@/components/toast/use-toast';
 
@@ -33,6 +36,9 @@ type Tab = (typeof TABS)[number];
 export interface EventEditorLocation {
   id: string;
   name: string;
+  address: string;
+  city: string;
+  state: string;
 }
 
 export interface EventEditorInitialValues {
@@ -122,6 +128,17 @@ export function EventEditorForm({
     setValues((prev) => ({ ...prev, [key]: value }));
   }
 
+  const selectedVenue = locations.find((location) => location.id === values.locationId);
+
+  function selectVenue(locationId: string) {
+    const venue = locations.find((location) => location.id === locationId);
+    setValues((prev) => ({
+      ...prev,
+      locationId,
+      ...(venue ? { city: venue.city, state: venue.state } : {}),
+    }));
+  }
+
   function buildPayload() {
     return {
       slug: slugify(values.title),
@@ -131,9 +148,10 @@ export function EventEditorForm({
       internalCode: values.internalCode || null,
       shortDescription: values.shortDescription,
       longDescription: values.longDescription || null,
-      startAt: values.startAt ? new Date(values.startAt).toISOString() : undefined,
-      endAt: values.endAt ? new Date(values.endAt).toISOString() : null,
-      timezone: values.timezone,
+      // Times are entered as wall-clock time at the event, not in the admin's browser timezone.
+      startAt: values.startAt ? wallTimeToUtc(values.startAt, values.timezone).toISOString() : undefined,
+      endAt: values.endAt ? wallTimeToUtc(values.endAt, values.timezone).toISOString() : null,
+      timezone: values.timezone.trim(),
       city: values.city,
       state: values.state,
       locationId: values.locationId || null,
@@ -149,6 +167,12 @@ export function EventEditorForm({
 
   async function handleSave(event?: React.FormEvent) {
     event?.preventDefault();
+    if (!isValidTimezone(values.timezone.trim())) {
+      const message = `"${values.timezone}" is not a recognised timezone. Use an IANA name such as America/Los_Angeles.`;
+      setError(message);
+      toastError('Unable to save event', message);
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
@@ -353,27 +377,42 @@ export function EventEditorForm({
         {activeTab === 'Location' ? (
           <>
             <div>
-              <label htmlFor="locationId" className="block text-sm font-medium text-neutral-900">
-                Venue
-              </label>
-              <select
-                id="locationId"
-                value={values.locationId}
-                onChange={(e) => update('locationId', e.target.value)}
-                className="mt-1 w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm focus:border-primary-950 focus:outline-none focus:ring-2 focus:ring-primary-950"
-              >
-                <option value="">No venue selected</option>
-                {locations.map((location) => (
-                  <option key={location.id} value={location.id}>
-                    {location.name}
-                  </option>
-                ))}
-              </select>
-              {locations.length === 0 ? (
-                <p className="mt-1 text-sm text-neutral-600">
-                  No locations yet. Add one under Locations first.
-                </p>
-              ) : null}
+              <div className="flex items-baseline justify-between gap-4">
+                <label htmlFor="locationId" className="block text-sm font-medium text-neutral-900">
+                  Venue
+                </label>
+                <Link
+                  href="/admin/locations"
+                  className="text-sm font-medium text-primary-900 underline-offset-4 hover:underline focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-950"
+                >
+                  Manage locations
+                </Link>
+              </div>
+              <div className="relative mt-1">
+                <MapPinIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500" />
+                <select
+                  id="locationId"
+                  value={values.locationId}
+                  onChange={(e) => selectVenue(e.target.value)}
+                  aria-describedby="locationId-hint"
+                  className="w-full cursor-pointer appearance-none rounded-md border border-neutral-300 bg-white py-2.5 pl-9 pr-10 text-sm text-neutral-900 transition-colors hover:border-neutral-400 focus:border-primary-950 focus:outline-none focus:ring-2 focus:ring-primary-950"
+                >
+                  <option value="">No venue selected</option>
+                  {locations.map((location) => (
+                    <option key={location.id} value={location.id}>
+                      {location.name} — {location.city}, {location.state}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDownIcon className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500" />
+              </div>
+              <p id="locationId-hint" className="mt-1.5 text-sm text-neutral-600">
+                {selectedVenue
+                  ? `${selectedVenue.address}, ${selectedVenue.city}, ${selectedVenue.state}`
+                  : locations.length === 0
+                    ? 'No locations yet. Add one under Manage locations first.'
+                    : 'Choosing a venue fills in the listing city and state below.'}
+              </p>
             </div>
             <Field label="City (listing)" id="city" value={values.city} onChange={(v) => update('city', v)} required />
             <Field label="State (listing)" id="state" value={values.state} onChange={(v) => update('state', v)} required />

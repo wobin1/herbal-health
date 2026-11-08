@@ -1,3 +1,4 @@
+import { isValidTimezone, utcToWallTime } from '@/lib/events/event-time';
 import { notFound } from 'next/navigation';
 import { requirePermission } from '@/lib/auth/require-admin';
 import { hasPermission } from '@/lib/auth/rbac';
@@ -6,9 +7,10 @@ import { EventNotFoundError, getAdminEventById } from '@/server/services/event-s
 import { EventEditorForm, type EventEditorInitialValues } from '@/components/admin/event-editor-form';
 import { BackLink } from '@/components/admin/ui';
 
-function toDateTimeLocal(date: Date | null | undefined): string {
+/** Shows the stored instant as wall-clock time at the event, matching how the form saves it. */
+function toDateTimeLocal(date: Date | null | undefined, timezone: string): string {
   if (!date) return '';
-  return date.toISOString().slice(0, 16);
+  return isValidTimezone(timezone) ? utcToWallTime(date, timezone) : date.toISOString().slice(0, 16);
 }
 
 interface EditEventPageProps {
@@ -37,8 +39,8 @@ export default async function EditEventPage({ params }: EditEventPageProps) {
     internalCode: event.internalCode ?? '',
     shortDescription: event.shortDescription,
     longDescription: event.longDescription ?? '',
-    startAt: toDateTimeLocal(event.startAt),
-    endAt: toDateTimeLocal(event.endAt),
+    startAt: toDateTimeLocal(event.startAt, event.timezone),
+    endAt: toDateTimeLocal(event.endAt, event.timezone),
     timezone: event.timezone,
     city: event.city,
     state: event.state,
@@ -63,7 +65,7 @@ export default async function EditEventPage({ params }: EditEventPageProps) {
       <h1 className="text-2xl font-semibold text-neutral-900">Edit Event: {event.title}</h1>
       <EventEditorForm
         initialValues={initialValues}
-        locations={locations.map((l) => ({ id: l.id, name: l.name }))}
+        locations={locations.map((l) => ({ id: l.id, name: l.name, address: l.address, city: l.city, state: l.state }))}
         ticketTypes={event.ticketTypes.map((t) => ({
           id: t.id,
           name: t.name,

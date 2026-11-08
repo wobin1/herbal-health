@@ -13,7 +13,7 @@ export default async function NewEventPage() {
       <BackLink href="/admin/events" label="Back to Events" />
       <h1 className="text-2xl font-semibold text-neutral-900">New Event</h1>
       <EventEditorForm
-        locations={locations.map((l) => ({ id: l.id, name: l.name }))}
+        locations={locations.map((l) => ({ id: l.id, name: l.name, address: l.address, city: l.city, state: l.state }))}
         canPublish={hasPermission(session.adminUser.role, 'events:publish')}
       />
     </div>

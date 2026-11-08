@@ -2,20 +2,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Reveal } from '@/components/motion/reveal';
 import { CalendarIcon } from '@/components/admin/icons';
+import { formatInEventTimezone } from '@/lib/events/event-time';
 
-const DATE_FORMATTER = new Intl.DateTimeFormat('en-US', {
-  weekday: 'short',
-  month: 'short',
-  day: 'numeric',
-  timeZone: 'UTC',
-});
-
-const TIME_FORMATTER = new Intl.DateTimeFormat('en-US', {
-  hour: '2-digit',
-  minute: '2-digit',
-  hour12: false,
-  timeZone: 'UTC',
-});
+const DATE_OPTIONS: Intl.DateTimeFormatOptions = { weekday: 'short', month: 'short', day: 'numeric' };
+const TIME_OPTIONS: Intl.DateTimeFormatOptions = { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' };
 
 interface UpcomingSeminarEvent {
   id: string;
@@ -24,6 +14,7 @@ interface UpcomingSeminarEvent {
   city: string;
   state: string;
   startAt: Date;
+  timezone: string;
   coverImageUrl: string | null;
 }
 
@@ -98,8 +89,8 @@ export function HomepageUpcomingSeminars({ events }: { events: UpcomingSeminarEv
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-accent-500/90 text-sm font-semibold">
-                  {DATE_FORMATTER.format(event.startAt)}
-                  <span className="text-neutral-50/60 font-normal"> &middot; {TIME_FORMATTER.format(event.startAt)}</span>
+                  {formatInEventTimezone(event.startAt, event.timezone, DATE_OPTIONS)}
+                  <span className="text-neutral-50/60 font-normal"> &middot; {formatInEventTimezone(event.startAt, event.timezone, TIME_OPTIONS)}</span>
                 </p>
                 <h3 className="mt-1 font-semibold text-neutral-50">{event.title}</h3>
                 <p className="mt-1 text-sm text-neutral-50/70">
