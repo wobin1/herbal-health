@@ -94,9 +94,17 @@ export interface PublicEventFilters {
   status?: EventStatus;
 }
 
+/**
+ * Statuses shown in public event listings. Cancelled events are left out of lists, but their
+ * own page stays reachable (PUBLICLY_VISIBLE_EVENT_STATUSES) so ticket holders see the notice.
+ */
+export const PUBLICLY_LISTED_EVENT_STATUSES: EventStatus[] = PUBLICLY_VISIBLE_EVENT_STATUSES.filter(
+  (status) => status !== 'CANCELLED',
+);
+
 export async function listPublicEvents(filters: PublicEventFilters, pageParams: PageParams) {
   const where: Prisma.EventWhereInput = {
-    status: filters.status ? filters.status : { in: PUBLICLY_VISIBLE_EVENT_STATUSES },
+    status: filters.status ? filters.status : { in: PUBLICLY_LISTED_EVENT_STATUSES },
   };
 
   if (filters.city) where.city = filters.city;
