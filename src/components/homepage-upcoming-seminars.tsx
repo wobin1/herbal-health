@@ -24,6 +24,7 @@ interface UpcomingSeminarEvent {
   city: string;
   state: string;
   startAt: Date;
+  coverImageUrl: string | null;
 }
 
 export function HomepageUpcomingSeminars({ events }: { events: UpcomingSeminarEvent[] }) {
@@ -80,8 +81,22 @@ export function HomepageUpcomingSeminars({ events }: { events: UpcomingSeminarEv
         ) : (
         <ul className="divide-neutral-50/15 divide-y border-neutral-50/15 lg:border-t lg:border-b">
           {events.map((event, index) => (
-            <Reveal key={event.id} as="li" delayMs={index * 80} className="flex items-center justify-between gap-4 py-5">
-              <div>
+            <Reveal key={event.id} as="li" delayMs={index * 80} className="flex items-center gap-4 py-5 sm:gap-5">
+              <div className="ring-neutral-50/15 relative h-16 w-20 shrink-0 overflow-hidden rounded-lg bg-primary-900 ring-1 sm:h-20 sm:w-28">
+                {event.coverImageUrl ? (
+                  <Image
+                    src={event.coverImageUrl}
+                    alt=""
+                    fill
+                    unoptimized={event.coverImageUrl.endsWith('.svg') || event.coverImageUrl.includes('placehold.co')}
+                    sizes="112px"
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="from-primary-700 to-primary-950 h-full w-full bg-gradient-to-br" />
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
                 <p className="text-accent-500/90 text-sm font-semibold">
                   {DATE_FORMATTER.format(event.startAt)}
                   <span className="text-neutral-50/60 font-normal"> &middot; {TIME_FORMATTER.format(event.startAt)}</span>
