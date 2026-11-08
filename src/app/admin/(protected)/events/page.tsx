@@ -19,8 +19,9 @@ import {
   thNumClassName,
   trClassName,
 } from '@/components/admin/ui';
+import { formatInEventTimezone } from '@/lib/events/event-time';
 
-const DATE_FORMATTER = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeZone: 'UTC' });
+const EVENT_DATE_OPTIONS: Intl.DateTimeFormatOptions = { dateStyle: 'medium' };
 
 function formatStartingPrice(ticketTypes: Array<{ priceMinorUnits: number; currency: string }>): string {
   if (ticketTypes.length === 0) return '—';
@@ -95,7 +96,7 @@ export default async function AdminEventsPage({
                     <tr key={event.id} className={trClassName}>
                       <td className={tdPrimaryClassName}>{event.title}</td>
                       <td className={tdClassName}>{event.location?.name ?? `${event.city}, ${event.state}`}</td>
-                      <td className={tdClassName}>{DATE_FORMATTER.format(event.startAt)}</td>
+                      <td className={tdClassName}>{formatInEventTimezone(event.startAt, event.timezone, EVENT_DATE_OPTIONS)}</td>
                       <td className={tdClassName}>
                         <StatusBadge status={event.status} />
                       </td>

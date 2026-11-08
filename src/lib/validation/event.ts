@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isValidTimezone } from '@/lib/events/event-time';
 
 const isoDate = z.coerce.date();
 
@@ -17,7 +18,7 @@ export const eventCreateSchema = z.object({
   longDescription: z.string().trim().max(20000).optional().nullable(),
   startAt: isoDate,
   endAt: isoDate.optional().nullable(),
-  timezone: z.string().trim().min(1).max(100),
+  timezone: z.string().trim().min(1).max(100).refine(isValidTimezone, 'timezone must be a valid IANA timezone'),
   city: z.string().trim().min(1).max(200),
   state: z.string().trim().min(1).max(200),
   locationId: z.string().trim().min(1).max(200).optional().nullable(),

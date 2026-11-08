@@ -19,7 +19,8 @@ const BASE = {
   title: 'Herbal Foundations',
   city: 'Portland',
   state: 'OR',
-  startAt: new Date('2026-12-06T15:54:00Z'),
+  startAt: new Date('2026-12-07T02:00:00Z'),
+  timezone: 'America/Los_Angeles',
 };
 
 describe('HomepageUpcomingSeminars', () => {
@@ -36,5 +37,12 @@ describe('HomepageUpcomingSeminars', () => {
     const { container } = render(<HomepageUpcomingSeminars events={[{ ...BASE, coverImageUrl: null }]} />);
     expect(container.querySelector('li img')).toBeNull();
     expect(screen.getByRole('heading', { name: 'Herbal Foundations' })).toBeInTheDocument();
+  });
+
+  it("shows the date and time in the event's own timezone", () => {
+    render(<HomepageUpcomingSeminars events={[{ ...BASE, coverImageUrl: null }]} />);
+    // 02:00 UTC on Dec 7 is 6:00 PM on Sun, Dec 6 in Portland.
+    expect(screen.getByText('Sun, Dec 6')).toBeInTheDocument();
+    expect(screen.getByText(/6:00\sPM PST/)).toBeInTheDocument();
   });
 });
