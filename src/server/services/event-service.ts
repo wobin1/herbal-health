@@ -210,8 +210,23 @@ export type EventInput = Omit<
   'id' | 'createdAt' | 'updatedAt' | 'status'
 >;
 
+/** Returns `base`, or `base-2`, `base-3`, … — the first slug no existing event uses. */
+async function nextAvailableSlug(base: string): Promise<string> {
+  const existing = await prisma.event.findMany({
+    where: { slug: { startsWith: base } },
+    select: { slug: true },
+  });
+  const taken = new Set(existing.map((e) => e.slug));
+  if (!taken.has(base)) return base;
+  let n = 2;
+  while (taken.has(`${base}-${n}`)) n += 1;
+  return `${base}-${n}`;
+}
+
 export async function createEvent(input: EventInput, actor: Actor): Promise<Event> {
-  const event = await prisma.event.create({ data: input }).catch(mapEventWriteError);
+  const slug = await nextAvailableSlug(input.slug);
+  // A concurrent create can still take the slug first; that surfaces as EventSlugConflictError.
+  const event = await prisma.event.create({ data: { ...input, slug } }).catch(mapEventWriteError);
   await recordAuditLog({
     actorId: actor.actorId,
     action: 'event.created',
