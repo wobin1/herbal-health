@@ -356,21 +356,24 @@ export function EventEditorForm({
               <label htmlFor="locationId" className="block text-sm font-medium text-neutral-900">
                 Venue
               </label>
-              <input
+              <select
                 id="locationId"
-                list="venue-options"
-                value={locations.find((location) => location.id === values.locationId)?.name ?? values.locationId}
-                onChange={(e) => {
-                  const match = locations.find((location) => location.name === e.target.value);
-                  update('locationId', match ? match.id : e.target.value);
-                }}
-                className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-primary-950 focus:outline-none focus:ring-2 focus:ring-primary-950"
-              />
-              <datalist id="venue-options">
+                value={values.locationId}
+                onChange={(e) => update('locationId', e.target.value)}
+                className="mt-1 w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm focus:border-primary-950 focus:outline-none focus:ring-2 focus:ring-primary-950"
+              >
+                <option value="">No venue selected</option>
                 {locations.map((location) => (
-                  <option key={location.id} value={location.name} />
+                  <option key={location.id} value={location.id}>
+                    {location.name}
+                  </option>
                 ))}
-              </datalist>
+              </select>
+              {locations.length === 0 ? (
+                <p className="mt-1 text-sm text-neutral-600">
+                  No locations yet. Add one under Locations first.
+                </p>
+              ) : null}
             </div>
             <Field label="City (listing)" id="city" value={values.city} onChange={(v) => update('city', v)} required />
             <Field label="State (listing)" id="state" value={values.state} onChange={(v) => update('state', v)} required />
