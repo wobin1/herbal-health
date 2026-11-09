@@ -68,6 +68,7 @@ export interface EventEditorInitialValues {
   seoCanonicalUrl: string;
   seoOgImageUrl: string;
   status: string;
+  isFeatured: boolean;
 }
 
 const EMPTY_VALUES: EventEditorInitialValues = {
@@ -96,6 +97,7 @@ const EMPTY_VALUES: EventEditorInitialValues = {
   seoCanonicalUrl: '',
   seoOgImageUrl: '',
   status: 'DRAFT',
+  isFeatured: false,
 };
 
 function toLines(value: string): string[] {
@@ -124,7 +126,7 @@ export function EventEditorForm({
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  function update<K extends keyof EventEditorInitialValues>(key: K, value: string) {
+  function update<K extends Exclude<keyof EventEditorInitialValues, 'isFeatured'>>(key: K, value: string) {
     setValues((prev) => ({ ...prev, [key]: value }));
   }
 
@@ -163,6 +165,7 @@ export function EventEditorForm({
       materialsIncluded: toLines(values.materialsIncluded),
       prerequisites: values.prerequisites || null,
       disclaimer: values.disclaimer || null,
+      isFeatured: values.isFeatured,
     };
   }
 
@@ -364,6 +367,35 @@ export function EventEditorForm({
               onChange={(v) => update('shortDescription', v)}
               required
             />
+            <div className="flex items-start justify-between gap-6 rounded-lg border border-neutral-200 bg-white px-4 py-3">
+              <div>
+                <p id="isFeatured-label" className="text-sm font-medium text-neutral-900">
+                  Feature on homepage
+                </p>
+                <p id="isFeatured-hint" className="mt-0.5 text-sm text-neutral-600">
+                  Shows this event in Upcoming Seminars on the homepage while it&apos;s coming soon, published, on
+                  sale or sold out.
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={values.isFeatured}
+                aria-labelledby="isFeatured-label"
+                aria-describedby="isFeatured-hint"
+                onClick={() => setValues((prev) => ({ ...prev, isFeatured: !prev.isFeatured }))}
+                className={`relative mt-0.5 inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors duration-fast ease-premium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-950 focus-visible:ring-offset-2 ${
+                  values.isFeatured ? 'bg-primary-950' : 'bg-neutral-300'
+                }`}
+              >
+                <span
+                  aria-hidden="true"
+                  className={`inline-block h-5 w-5 rounded-full bg-white shadow transition-transform duration-fast ease-premium ${
+                    values.isFeatured ? 'translate-x-5' : 'translate-x-0.5'
+                  }`}
+                />
+              </button>
+            </div>
           </>
         ) : null}
 

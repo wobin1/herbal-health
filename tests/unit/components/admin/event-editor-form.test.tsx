@@ -147,12 +147,36 @@ describe('EventEditorForm slug handling', () => {
           seoCanonicalUrl: '',
           seoOgImageUrl: '',
           status: 'ON_SALE',
+          isFeatured: true,
         }}
       />,
     );
+    expect(screen.getByRole('switch', { name: /feature on homepage/i })).toHaveAttribute('aria-checked', 'true');
     fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).not.toHaveProperty('slug');
+  });
+});
+
+describe('EventEditorForm featured toggle', () => {
+  it('is off by default and saves isFeatured: true when switched on', async () => {
+    render(<EventEditorForm locations={LOCATIONS} canPublish={false} />);
+    const toggle = screen.getByRole('switch', { name: /feature on homepage/i });
+    expect(toggle).toHaveAttribute('aria-checked', 'false');
+
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-checked', 'true');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Create Event' }));
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).isFeatured).toBe(true);
+  });
+
+  it('saves isFeatured: false when left off', async () => {
+    render(<EventEditorForm locations={LOCATIONS} canPublish={false} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Create Event' }));
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).isFeatured).toBe(false);
   });
 });
 
