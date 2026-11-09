@@ -45,4 +45,9 @@ describe('HomepageUpcomingSeminars', () => {
     expect(screen.getByText('Sun, Dec 6')).toBeInTheDocument();
     expect(screen.getByText(/6:00\sPM PST/)).toBeInTheDocument();
   });
+
+  it('links each seminar card to its event page', () => {
+    render(<HomepageUpcomingSeminars events={[{ ...BASE, coverImageUrl: null }]} />);
+    expect(screen.getByRole('link', { name: 'Herbal Foundations' })).toHaveAttribute('href', '/events/herbal-foundations');
+  });
 });

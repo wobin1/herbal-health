@@ -18,95 +18,90 @@ interface UpcomingSeminarEvent {
   coverImageUrl: string | null;
 }
 
+/** Light section with image cards (the layout that sits directly under the hero). */
 export function HomepageUpcomingSeminars({ events }: { events: UpcomingSeminarEvent[] }) {
   return (
-    <section className="bg-primary-950 relative overflow-hidden" aria-labelledby="events-heading">
-      <div className="absolute inset-0">
-        <Image
-          src="/images/seminars-bg.jpg"
-          alt=""
-          fill
-          sizes="100vw"
-          className="object-cover"
-        />
-        <div className="bg-primary-950/80 absolute inset-0" />
-        <div className="from-primary-950 via-primary-950/70 absolute inset-0 bg-gradient-to-r to-transparent" />
-      </div>
-
-      <div className="relative mx-auto grid max-w-6xl gap-10 px-6 py-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] lg:items-center">
+    <section className="bg-neutral-50 py-24" aria-labelledby="events-heading">
+      <div className="mx-auto max-w-5xl px-6 text-center">
         <Reveal>
-          <p className="text-accent-500/90 text-sm font-semibold tracking-[0.2em] uppercase">
-            Get Involved
-          </p>
-          <h2
-            id="events-heading"
-            className="font-serif mt-3 text-3xl font-semibold leading-tight text-neutral-50 sm:text-4xl"
-          >
+          <p className="text-primary-700/90 text-sm font-semibold tracking-[0.2em] uppercase">Get Involved</p>
+          <h2 id="events-heading" className="mt-3 text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl">
             Upcoming Seminars.
           </h2>
-          <p className="mt-4 max-w-sm text-sm leading-relaxed text-neutral-50/80">
-            Join Dr. Goodman&apos;s traveling workshops near you. Learn practical herbal
-            preparation, wellness fundamentals, and time-tested remedies alongside a community of
-            curious learners.
+          <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-neutral-600">
+            Join Dr. Goodman&apos;s traveling workshops near you. Learn practical herbal preparation, wellness
+            fundamentals, and time-tested remedies alongside a community of curious learners.
           </p>
-          <Link
-            href="/events"
-            className="border-neutral-50/40 text-neutral-50/90 hover:border-neutral-50 hover:text-neutral-50 mt-6 inline-block border-b text-sm font-medium transition-colors duration-base ease-premium"
-          >
-            See all seminars
-          </Link>
         </Reveal>
 
         {events.length === 0 ? (
-          <div className="border-neutral-50/15 flex flex-col items-center gap-4 border-t border-b px-4 py-14 text-center lg:py-0">
-            <div className="text-neutral-50/80 ring-neutral-50/20 flex h-14 w-14 items-center justify-center rounded-full bg-neutral-50/10 ring-1 ring-inset">
-              <CalendarIcon className="h-6 w-6" />
+          <div className="mt-14 flex flex-col items-center gap-4 rounded-2xl border border-neutral-200 bg-white px-6 py-16 text-center shadow-sm">
+            <div className="text-primary-700 ring-primary-700/15 flex h-16 w-16 items-center justify-center rounded-full bg-neutral-100 ring-1 ring-inset">
+              <CalendarIcon className="h-7 w-7" />
             </div>
-            <div className="max-w-xs">
-              <p className="font-semibold text-neutral-50">No seminars on the calendar yet</p>
-              <p className="text-neutral-50/70 mt-1.5 text-sm leading-relaxed">
+            <div className="max-w-sm">
+              <p className="text-base font-semibold text-neutral-900">No seminars on the calendar yet</p>
+              <p className="mt-1.5 text-sm leading-relaxed text-neutral-500">
                 New dates are added regularly — check the events page or contact us to be notified.
               </p>
             </div>
           </div>
         ) : (
-        <ul className="divide-neutral-50/15 divide-y border-neutral-50/15 lg:border-t lg:border-b">
-          {events.map((event, index) => (
-            <Reveal key={event.id} as="li" delayMs={index * 80} className="flex items-center gap-4 py-5 sm:gap-5">
-              <div className="ring-neutral-50/15 relative h-16 w-20 shrink-0 overflow-hidden rounded-lg bg-primary-900 ring-1 sm:h-20 sm:w-28">
-                {event.coverImageUrl ? (
-                  <Image
-                    src={event.coverImageUrl}
-                    alt=""
-                    fill
-                    unoptimized={event.coverImageUrl.endsWith('.svg') || event.coverImageUrl.includes('placehold.co')}
-                    sizes="112px"
-                    className="object-cover"
-                  />
-                ) : (
-                  <div className="from-primary-700 to-primary-950 h-full w-full bg-gradient-to-br" />
-                )}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-accent-500/90 text-sm font-semibold">
+          <ul className="mt-14 flex flex-wrap justify-center gap-8 text-left">
+            {events.map((event, index) => (
+              <Reveal
+                key={event.id}
+                as="li"
+                delayMs={index * 80}
+                className="group relative w-full sm:w-[calc((100%-4rem)/3)]"
+              >
+                <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-neutral-200 shadow-sm transition-shadow duration-base ease-premium group-hover:shadow-xl">
+                  {event.coverImageUrl ? (
+                    <Image
+                      src={event.coverImageUrl}
+                      alt=""
+                      fill
+                      unoptimized={event.coverImageUrl.endsWith('.svg') || event.coverImageUrl.includes('placehold.co')}
+                      sizes="(min-width: 640px) 33vw, 100vw"
+                      className="object-cover transition-transform duration-slow ease-premium group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="from-primary-700 to-primary-950 h-full w-full bg-gradient-to-br" />
+                  )}
+                </div>
+                <p className="mt-6 text-sm font-semibold text-accent-600">
                   {formatInEventTimezone(event.startAt, event.timezone, DATE_OPTIONS)}
-                  <span className="text-neutral-50/60 font-normal"> &middot; {formatInEventTimezone(event.startAt, event.timezone, TIME_OPTIONS)}</span>
+                  <span className="font-normal text-neutral-500">
+                    {' '}
+                    &middot; {formatInEventTimezone(event.startAt, event.timezone, TIME_OPTIONS)}
+                  </span>
                 </p>
-                <h3 className="mt-1 font-semibold text-neutral-50">{event.title}</h3>
-                <p className="mt-1 text-sm text-neutral-50/70">
+                <h3 className="mt-1 font-semibold text-neutral-900">
+                  {/* The whole card is clickable via this link's stretched hit area. */}
+                  <Link
+                    href={`/events/${event.slug}`}
+                    className="after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-primary-950 focus-visible:after:ring-offset-4"
+                  >
+                    {event.title}
+                  </Link>
+                </h3>
+                <p className="mt-1 text-sm text-neutral-600">
                   {event.city}, {event.state}
                 </p>
-              </div>
-              <Link
-                href={`/events/${event.slug}`}
-                className="border-neutral-50/50 text-neutral-50 hover:bg-neutral-50 hover:text-primary-950 inline-flex shrink-0 items-center justify-center rounded-full border px-5 py-2 text-sm font-medium transition-colors duration-base ease-premium"
-              >
-                Attend
-              </Link>
-            </Reveal>
-          ))}
-        </ul>
+                <span className="mt-3 inline-block border-b border-neutral-900/30 text-sm font-medium text-neutral-900 transition-colors group-hover:border-neutral-900">
+                  Attend
+                </span>
+              </Reveal>
+            ))}
+          </ul>
         )}
+
+        <Link
+          href="/events"
+          className="mt-12 inline-block border-b border-neutral-900/40 text-sm font-medium text-neutral-900 transition-colors duration-base ease-premium hover:border-neutral-900"
+        >
+          See all seminars
+        </Link>
       </div>
     </section>
   );
