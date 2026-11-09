@@ -57,6 +57,7 @@ export default async function EditEventPage({ params }: EditEventPageProps) {
     seoCanonicalUrl: event.seoCanonicalUrl ?? '',
     seoOgImageUrl: event.seoOgImageUrl ?? '',
     status: event.status,
+    isFeatured: event.isFeatured,
   };
 
   return (
