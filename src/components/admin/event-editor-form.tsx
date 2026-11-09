@@ -9,6 +9,7 @@ import { MultiImageUploadField } from '@/components/admin/multi-image-upload-fie
 import { ButtonSpinner } from '@/components/admin/ui';
 import { ChevronDownIcon, MapPinIcon } from '@/components/admin/icons';
 import { isValidTimezone, wallTimeToUtc } from '@/lib/events/event-time';
+import { matchTimezone, US_TIMEZONES } from '@/lib/events/us-timezones';
 import { useConfirm } from '@/components/confirm-dialog';
 import { toastError, toastSuccess } from '@/components/toast/use-toast';
 
@@ -121,7 +122,12 @@ export function EventEditorForm({
   const router = useRouter();
   const { confirm, dialog } = useConfirm();
   const isEdit = Boolean(initialValues?.id);
-  const [values, setValues] = useState<EventEditorInitialValues>(initialValues ?? EMPTY_VALUES);
+  // Older events may have a typed timezone like "Eastern Standard Time (EST)"; resolve it to its zone.
+  const savedTimezone = initialValues?.timezone ?? '';
+  const unmatchedSavedTimezone = initialValues && !matchTimezone(savedTimezone) ? savedTimezone : null;
+  const [values, setValues] = useState<EventEditorInitialValues>(() =>
+    initialValues ? { ...initialValues, timezone: matchTimezone(savedTimezone) ?? '' } : EMPTY_VALUES,
+  );
   const [activeTab, setActiveTab] = useState<Tab>('General');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -172,7 +178,7 @@ export function EventEditorForm({
   async function handleSave(event?: React.FormEvent) {
     event?.preventDefault();
     if (!isValidTimezone(values.timezone.trim())) {
-      const message = `"${values.timezone}" is not a recognised timezone. Use an IANA name such as America/Los_Angeles.`;
+      const message = "Please choose the event's timezone on the Schedule tab.";
       setError(message);
       toastError('Unable to save event', message);
       return;
@@ -403,7 +409,37 @@ export function EventEditorForm({
           <>
             <Field label="Start At" id="startAt" type="datetime-local" value={values.startAt} onChange={(v) => update('startAt', v)} required />
             <Field label="End At" id="endAt" type="datetime-local" value={values.endAt} onChange={(v) => update('endAt', v)} required />
-            <Field label="Timezone (IANA)" id="timezone" value={values.timezone} onChange={(v) => update('timezone', v)} required />
+            <div>
+              <label htmlFor="timezone" className="block text-sm font-medium text-neutral-900">
+                Timezone<span aria-hidden="true"> *</span>
+              </label>
+              <div className="relative mt-1">
+                <select
+                  id="timezone"
+                  value={values.timezone}
+                  required
+                  aria-describedby="timezone-hint"
+                  onChange={(e) => update('timezone', e.target.value)}
+                  className="w-full cursor-pointer appearance-none rounded-md border border-neutral-300 bg-white py-2.5 pl-3 pr-10 text-sm text-neutral-900 transition-colors hover:border-neutral-400 focus:border-primary-950 focus:outline-none focus:ring-2 focus:ring-primary-950"
+                >
+                  <option value="">Choose a timezone</option>
+                  {US_TIMEZONES.map((zone) => (
+                    <option key={zone.value} value={zone.value}>
+                      {zone.label}
+                    </option>
+                  ))}
+                  {values.timezone && !US_TIMEZONES.some((zone) => zone.value === values.timezone) ? (
+                    <option value={values.timezone}>{values.timezone}</option>
+                  ) : null}
+                </select>
+                <ChevronDownIcon className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500" />
+              </div>
+              <p id="timezone-hint" className="mt-1.5 text-sm text-neutral-600">
+                {unmatchedSavedTimezone && !values.timezone
+                  ? `The saved timezone "${unmatchedSavedTimezone}" wasn't recognised. Choose the timezone where the event takes place.`
+                  : 'Start and end times are in this timezone — the local time at the venue.'}
+              </p>
+            </div>
           </>
         ) : null}
 

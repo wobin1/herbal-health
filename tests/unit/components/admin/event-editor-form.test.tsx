@@ -11,6 +11,39 @@ const LOCATIONS = [
   { id: 'loc-2', name: 'Dallas Wellness Center', address: '400 Elm Ave', city: 'Dallas', state: 'TX' },
 ];
 
+function editValues(overrides: Partial<EventEditorInitialValues> = {}): EventEditorInitialValues {
+  return {
+    id: 'evt-1',
+    slug: 'herbal-101',
+    title: 'Herbal 101',
+    seriesName: '',
+    volumeLabel: '',
+    internalCode: '',
+    shortDescription: 'Short',
+    longDescription: 'Long',
+    startAt: '2026-12-06T10:00',
+    endAt: '2026-12-06T12:00',
+    timezone: 'America/New_York',
+    city: 'Austin',
+    state: 'TX',
+    locationId: '',
+    coverImageUrl: '',
+    galleryImageUrls: '',
+    documentUrls: '',
+    whatYouWillLearn: '',
+    materialsIncluded: '',
+    prerequisites: '',
+    disclaimer: '',
+    seoTitle: '',
+    seoMetaDescription: '',
+    seoCanonicalUrl: '',
+    seoOgImageUrl: '',
+    status: 'ON_SALE',
+    isFeatured: false,
+    ...overrides,
+  };
+}
+
 function openLocationTab() {
   fireEvent.click(screen.getByRole('tab', { name: 'Location' }));
 }
@@ -103,13 +136,33 @@ describe('EventEditorForm event times', () => {
     expect(body.endAt).toBe('2026-12-06T20:30:00.000Z');
   });
 
-  it('blocks saving with a clear error when the timezone is not recognised', async () => {
+  it('offers US timezones in a dropdown with friendly labels', () => {
     render(<EventEditorForm locations={LOCATIONS} canPublish={false} />);
     fireEvent.click(screen.getByRole('tab', { name: 'Schedule' }));
-    fillTimes('2026-12-06T10:00', '2026-12-06T12:30', 'Portland');
+    const tz = screen.getByRole('combobox', { name: /Timezone/ });
+    expect(tz.tagName).toBe('SELECT');
+    expect(screen.getByRole('option', { name: /Eastern Time/ })).toHaveValue('America/New_York');
+    expect(screen.getByRole('option', { name: /Hawaii Time/ })).toHaveValue('Pacific/Honolulu');
+  });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Create Event' }));
-    expect(await screen.findByText(/timezone/i, { selector: '[role="alert"], [role="alert"] *' })).toBeInTheDocument();
+  it('matches an old typed timezone to the right zone when editing, so it saves', async () => {
+    render(<EventEditorForm locations={LOCATIONS} canPublish={false} initialValues={editValues({ timezone: 'Eastern Standard Time (EST, UTC−5)' })} />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Schedule' }));
+    expect(screen.getByRole('combobox', { name: /Timezone/ })).toHaveValue('America/New_York');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).timezone).toBe('America/New_York');
+  });
+
+  it('asks for a timezone instead of saving when an old value cannot be matched', async () => {
+    render(<EventEditorForm locations={LOCATIONS} canPublish={false} initialValues={editValues({ timezone: 'Portland' })} />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Schedule' }));
+    expect(screen.getByRole('combobox', { name: /Timezone/ })).toHaveValue('');
+    expect(screen.getByText(/"Portland" wasn't recognised/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(/choose the event's timezone/i);
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });

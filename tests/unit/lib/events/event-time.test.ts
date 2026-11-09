@@ -55,4 +55,13 @@ describe('formatInEventTimezone', () => {
     const out = formatInEventTimezone(new Date('2026-12-07T02:00:00Z'), 'Not/AZone', { hour: 'numeric', minute: '2-digit' });
     expect(out).toBe('2:00 AM');
   });
+
+  it('understands an old typed timezone like "Eastern Standard Time (EST)" instead of falling back to UTC', () => {
+    const out = formatInEventTimezone(new Date('2027-01-08T13:00:00Z'), 'Eastern Standard Time (EST, UTC−5)', {
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+    expect(out).toBe('8:00 AM');
+  });
 });
+

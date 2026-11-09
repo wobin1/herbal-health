@@ -1,4 +1,5 @@
 import { isValidTimezone, utcToWallTime } from '@/lib/events/event-time';
+import { matchTimezone } from '@/lib/events/us-timezones';
 import { notFound } from 'next/navigation';
 import { requirePermission } from '@/lib/auth/require-admin';
 import { hasPermission } from '@/lib/auth/rbac';
@@ -39,8 +40,8 @@ export default async function EditEventPage({ params }: EditEventPageProps) {
     internalCode: event.internalCode ?? '',
     shortDescription: event.shortDescription,
     longDescription: event.longDescription ?? '',
-    startAt: toDateTimeLocal(event.startAt, event.timezone),
-    endAt: toDateTimeLocal(event.endAt, event.timezone),
+    startAt: toDateTimeLocal(event.startAt, matchTimezone(event.timezone) ?? event.timezone),
+    endAt: toDateTimeLocal(event.endAt, matchTimezone(event.timezone) ?? event.timezone),
     timezone: event.timezone,
     city: event.city,
     state: event.state,
