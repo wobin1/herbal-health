@@ -3,7 +3,8 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { getPublicEventBySlug, listAlternativeEvents } from '@/server/services/event-service';
 import { getEventStatusCta } from '@/lib/events/status-cta';
-import { getSeatsRemaining } from '@/lib/events/availability';
+import { getSeatsRemaining, isTicketPurchasable } from '@/lib/events/availability';
+import { getTicketPurchaseState } from '@/lib/events/ticket-purchase';
 import { TicketSelector } from '@/components/ticket-selector';
 import { formatInEventTimezone } from '@/lib/events/event-time';
 
@@ -50,6 +51,11 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
     event.ticketTypes.length > 0 &&
     event.ticketTypes.every((ticket) => getSeatsRemaining(ticket) === 0);
   const alternatives = isSoldOut ? await listAlternativeEvents(event, now) : [];
+  const purchase = getTicketPurchaseState(event, now);
+  // Only offer ticket types whose sales window is open; sold-out ones still show as "Sold out".
+  const offeredTickets = event.ticketTypes.filter(
+    (ticket) => getSeatsRemaining(ticket) === 0 || isTicketPurchasable(ticket, now),
+  );
 
   const structuredData = {
     '@context': 'https://schema.org',
@@ -105,6 +111,20 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
           {event.city}, {event.state}
         </p>
       )}
+
+      {purchase.canBuy ? (
+        <div className="mt-6 flex flex-wrap items-center gap-4 rounded-2xl bg-primary-950 px-5 py-4 text-neutral-50">
+          <p className="text-sm">
+            Tickets from <span className="text-base font-semibold">{purchase.fromPrice}</span>
+          </p>
+          <a
+            href="#tickets"
+            className="ml-auto inline-flex items-center rounded-full bg-neutral-50 px-6 py-2.5 text-sm font-semibold text-primary-950 transition-colors duration-fast ease-premium hover:bg-accent-500 hover:text-neutral-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-50"
+          >
+            Buy Tickets
+          </a>
+        </div>
+      ) : null}
 
       {event.location ? (
         <section className="mt-6" aria-labelledby="map-heading">
@@ -167,16 +187,25 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
         </section>
       ) : null}
 
-      {event.ticketTypes.length > 0 ? (
-        <section id="tickets" className="mt-8 scroll-mt-24" aria-labelledby="tickets-heading">
-          <h2 id="tickets-heading" className="text-xl font-semibold text-neutral-900">
-            Tickets
+      {event.ticketTypes.length > 0 || event.status === 'ON_SALE' ? (
+        <section
+          id="tickets"
+          className="mt-12 scroll-mt-24 rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm sm:p-8"
+          aria-labelledby="tickets-heading"
+        >
+          <h2 id="tickets-heading" className="font-serif text-2xl font-semibold text-neutral-900">
+            {purchase.canBuy ? 'Buy Tickets' : 'Tickets'}
           </h2>
-          <div className="mt-3 text-neutral-600">
-            {event.status === 'ON_SALE' ? (
+          {purchase.canBuy ? (
+            <p className="mt-1 text-sm text-neutral-600">Choose your ticket and continue to secure checkout.</p>
+          ) : null}
+          <div className="mt-5 text-neutral-600">
+            {event.status === 'ON_SALE' && offeredTickets.length === 0 ? (
+              <p>Tickets aren&apos;t available to buy yet. Please check back soon.</p>
+            ) : event.status === 'ON_SALE' ? (
               <TicketSelector
                 eventId={event.id}
-                tickets={event.ticketTypes.map((ticket) => ({
+                tickets={offeredTickets.map((ticket) => ({
                   id: ticket.id,
                   name: ticket.name,
                   priceMinorUnits: ticket.priceMinorUnits,
