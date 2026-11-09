@@ -29,12 +29,12 @@ export default async function HomePage() {
         ctaHref={content.heroCtaHref}
       />
 
+      <HomepageUpcomingSeminars events={events} />
+
       <HomepageBenefits
         heading={{ line1: 'Practical Knowledge For', line2: 'Everyday Herbal Wellness' }}
         items={focusItems.slice(0, 6)}
       />
-
-      <HomepageUpcomingSeminars events={events} />
 
       {faqs.length > 0 ? (
         <section className="bg-neutral-50 py-24" aria-labelledby="faq-heading">
