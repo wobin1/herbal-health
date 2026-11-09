@@ -1,3 +1,5 @@
+import { matchTimezone } from '@/lib/events/us-timezones';
+
 /**
  * Event times are stored as UTC instants plus the event's IANA timezone. Admins enter and
  * read times as wall-clock time *at the event*, and the public site shows them the same way,
@@ -49,17 +51,17 @@ export function utcToWallTime(date: Date, timezone: string): string {
   return `${p.year}-${pad(p.month)}-${pad(p.day)}T${pad(p.hour)}:${pad(p.minute)}`;
 }
 
-/** Formats a UTC instant in the event's timezone, falling back to UTC if the timezone is invalid. */
+/**
+ * Formats a UTC instant in the event's timezone. Old typed values (e.g. "EST") are matched to
+ * their zone; anything unrecognisable falls back to UTC rather than crashing the page.
+ */
 export function formatInEventTimezone(
   date: Date,
   timezone: string,
   options: Omit<Intl.DateTimeFormatOptions, 'timeZone'>,
 ): string {
-  try {
-    return new Intl.DateTimeFormat('en-US', { ...options, timeZone: timezone }).format(date);
-  } catch {
-    return new Intl.DateTimeFormat('en-US', { ...options, timeZone: 'UTC' }).format(date);
-  }
+  const zone = matchTimezone(timezone) ?? 'UTC';
+  return new Intl.DateTimeFormat('en-US', { ...options, timeZone: zone }).format(date);
 }
 
 /** True if `timezone` is an IANA timezone this runtime recognises. */
